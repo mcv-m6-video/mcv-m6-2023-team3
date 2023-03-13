@@ -22,8 +22,11 @@ def main(argv, path):
         path = os.path.join(path, "gt/gt.txt")
         gt_bb = load_bb(path)
         study_noise = study_effect_noise(gt_bb)
-        study_noise_pos = study_noise['pos']
-        plot_ap_miou(study_noise_pos)
+        plot_ap_miou(study_noise['pos'], title="Displacement", xlabel="Max distance")
+        plot_ap_miou(study_noise['size'], title="Resize", xlabel="Max distance")
+        plot_ap_miou(study_noise['gen'], title="Generate", xlabel="Probability")
+        plot_ap_miou(study_noise['del'], title="Delete", xlabel="Probability")
+
 
 
 
