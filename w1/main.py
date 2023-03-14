@@ -6,9 +6,8 @@ sys.path.append("../")
 #https://github.com/liruoteng/OpticalFlowToolkit.git
 from OpticalFlowToolkit.lib import flowlib
 import cv2
-
 import matplotlib.pyplot as plt
-from OpticalFlowToolkit.lib import flowlib
+
 
 from plot_data import *
 from load_input import *
