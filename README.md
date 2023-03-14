@@ -133,14 +133,6 @@ Distributed under the MIT License.
 <!-- CONTACT -->
 ## Contact
 
-Alberto Barreiro -
-
-Manel Guzmán Castellana - manelguz7@gmail.com
-
-Jiaqiang Ye Zhu - jiaqiang.ye@autonoma.cat 
-
-Advait Dixit - 
-
 
 | Albert Barreiro| Manel Guzman | Jiaqiang Ye Zhu |Advait Dixit|
 |--------------|-----------|-----------|-----------|
