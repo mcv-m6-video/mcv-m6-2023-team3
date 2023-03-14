@@ -27,7 +27,7 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#project">Project</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -91,7 +91,7 @@ This is an example of how to list things you need to use the software and how to
 
 
 
-<!-- USAGE EXAMPLES -->
+<!-- Usage -->
 ## Usage
 
   ```
@@ -101,6 +101,18 @@ This is an example of how to list things you need to use the software and how to
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+<!-- Project -->
+## Project
+
+- [Week 1: Datasets and metrics implementations](https://github.com/mcv-m6-video/mcv-m6-2023-team3/tree/main/w1)
+
+- Week 2: Background Estimation (Link not available yet)
+
+- Week 3: Oject Detection and Tracking (Link not available yet)
+
+- Week 4: Optical Flow: Stabilization and Tracking (Link not available yet)
+
+- Week 5: Multi-Target Multi-Camera Tracking (Link not available yet)
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -137,17 +149,7 @@ Distributed under the MIT License.
 |--------------|-----------|-----------|-----------|
  |albertbarreirod@gmail.com|manelguz7@gmail.com| jiaqiangyz@gmail.com | advaitdixit99@gmail.com|
 
-Project Link: [https://github.com/mcv-m6-video/mcv-m6-2023-team3](https://github.com/mcv-m6-video/mcv-m6-2023-team3)
 
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-<!-- Slides -->
-### Slides 
-
-* [Week1]
-
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
