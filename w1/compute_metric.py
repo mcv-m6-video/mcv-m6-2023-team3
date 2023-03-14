@@ -49,9 +49,12 @@ def calculate_ap_prec_rec_no_confi(gt_bb, predicted_bb, iou_threshold=0.5, itera
         frame_last_pos_pr = 0
         true_positives = np.zeros(len(predicted_bb))
         false_positives = np.zeros(len(predicted_bb))
-        for frame in range(gt_bb[0][0],gt_bb[-1][0]+1):
+        frame = 0
+        while frame < gt_bb[-1][0]:
             frame_ini_pos_gt = frame_last_pos_gt
-            frame_ini_pos_pr = frame_last_pos_pr 
+            frame_ini_pos_pr = frame_last_pos_pr
+
+            frame = gt_bb[frame_ini_pos_gt][0] 
             while len(gt_bb) > frame_last_pos_gt and gt_bb[frame_last_pos_gt][0] == frame: frame_last_pos_gt += 1
             while len(predicted_bb) > frame_last_pos_pr and predicted_bb[frame_last_pos_pr][0] == frame: frame_last_pos_pr += 1
             gt_frame = gt_bb[frame_ini_pos_gt:frame_last_pos_gt]
@@ -143,7 +146,7 @@ def calculate_predict_generate(gt_bb_list, prob_create, x_size=1920, y_size=1080
                 
     return predict_list
 
-def calculate_noise_generate(gt_bb_list, prob_create, x_size=1920, y_size=1080, max_gen = 10):
+def calculate_noise_generate(gt_bb_list, prob_create, x_size=1920, y_size=1080, max_gen = 5):
     """ 
     Calculate AP and MIOU from the generation distortion
       ----> x
@@ -157,9 +160,7 @@ def calculate_noise_generate(gt_bb_list, prob_create, x_size=1920, y_size=1080, 
         predicted = list(gt_bb)
         total_iou += calculate_iou(gt_bb[1:], predicted[1:])
         predict_list.append(predicted)
-    total_length = len(gt_bb_list)
 
-    for gt_bb in gt_bb_list:
         for _ in  range(max_gen):
             if random.randint(0,100) < prob_create:
                 left = random.randint(0,x_size)
@@ -168,10 +169,11 @@ def calculate_noise_generate(gt_bb_list, prob_create, x_size=1920, y_size=1080, 
                 height = random.randint(top,y_size) - top
 
                 total_iou += calculate_iou(gt_bb[1:], [left,top,width,height])
-                total_length += 1
+
                 predict_list.append([gt_bb[0],left,top,width,height])
 
-    miou = total_iou / total_length
+
+    miou = total_iou / len(predict_list)
     ap,_,_ = calculate_ap_prec_rec_no_confi(gt_bb_list, predict_list)
     return miou, ap
 
