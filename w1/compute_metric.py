@@ -224,3 +224,4 @@ def study_effect_noise(gt_bb_list, r_max_position = 100, r_max_size = 100, r_max
     
 
     return effect_noise
+
