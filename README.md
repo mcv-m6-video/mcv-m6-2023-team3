@@ -75,12 +75,11 @@ This is an example of how to list things you need to use the software and how to
 
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/mcv-m6-video/mcv-m6-2023-team3.git
    ```
-3. Install Anaconda Manager
+2. Install Anaconda Manager
    ```sh
    wget https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
    ```
