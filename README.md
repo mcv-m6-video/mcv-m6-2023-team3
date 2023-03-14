@@ -1,6 +1,6 @@
 <div id="top"></div>
 
-  <h3 align="center">M6-Project: Video Surveillance for Road Traffic Monitoring Team 3</h3>
+  <h1 align="center">M6-Project: Video Surveillance for Road Traffic Monitoring Team 3</h1>
 
   <p align="center">
     Repo containing the assigments for the different weeks of the module
