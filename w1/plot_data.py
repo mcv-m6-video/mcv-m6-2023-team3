@@ -3,6 +3,7 @@ import matplotlib
 from matplotlib.patches import Rectangle
 from PIL import Image
 import numpy as np
+import cv2
 
 matplotlib.use('TkAgg')
 
@@ -54,7 +55,7 @@ def plot_optical_flow(img, flow):
     # Create meshgrid of x and y coordinates
     h, w = img.shape[:2]
     x, y = np.meshgrid(np.arange(0, w, n), np.arange(0, h, n))
-
+    bright_img = cv2.convertScaleAbs(img, alpha=1.5, beta=0)
     # Select a subset of the optical flow data
     u, v = flow[stride][:,:,0], flow[stride][:,:,1]
 
@@ -65,7 +66,7 @@ def plot_optical_flow(img, flow):
     mag = np.sqrt(u**2 + v**2)
     norm = plt.Normalize(vmin=0, vmax=np.max(mag))
     # Create quiver plot
-    plt.imshow(img)
+    plt.imshow(bright_img)
     plt.quiver(x, y, u_norm, -v_norm, mag, cmap=cmap, norm=norm, scale=10, width=0.001)
 
     # Display the image and the quiver plot
