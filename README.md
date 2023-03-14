@@ -95,7 +95,15 @@ This is an example of how to list things you need to use the software and how to
 ## Usage
 
   ```
-    python3 main.py
+python main.py -h
+usage: main.py [-h] <-w WEEK> <-t TASK>
+
+M6 - Video Analysis: Video Surveillance for Road Traffic Monitoring
+
+Arguments:
+ -h, --help            show this help message and exit
+ -w WEEK, --week WEEK  week to execute. Options are [1,2,3,4,5]
+ -t TASK, --task TASK  task to execute. Options depend on each week.
   ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
