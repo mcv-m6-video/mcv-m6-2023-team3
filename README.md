@@ -29,8 +29,8 @@
     <li><a href="#usage">Usage</a></li>
     <li><a href="#project">Project</a></li>
     <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
+    <li><a href="#license">License</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
@@ -121,6 +121,7 @@ Arguments:
 - Week 4: Optical Flow: Stabilization and Tracking (Link not available yet)
 
 - Week 5: Multi-Target Multi-Camera Tracking (Link not available yet)
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -139,6 +140,15 @@ Don't forget to give the project a star! Thanks again!
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+<!-- CONTACT -->
+## Contact
+
+
+| Albert Barreiro| Manel Guzman | Jiaqiang Ye Zhu |Advait Dixit|
+|--------------|-----------|-----------|-----------|
+ |albertbarreirod@gmail.com|manelguz7@gmail.com| jiaqiangyz@gmail.com | advaitdixit99@gmail.com|
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- LICENSE -->
 ## License
@@ -149,15 +159,6 @@ Distributed under the MIT License.
 
 
 
-<!-- CONTACT -->
-## Contact
-
-
-| Albert Barreiro| Manel Guzman | Jiaqiang Ye Zhu |Advait Dixit|
-|--------------|-----------|-----------|-----------|
- |albertbarreirod@gmail.com|manelguz7@gmail.com| jiaqiangyz@gmail.com | advaitdixit99@gmail.com|
-
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
