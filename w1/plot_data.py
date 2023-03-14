@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.patches import Rectangle
 from PIL import Image
+import numpy as np
 
 matplotlib.use('TkAgg')
 
@@ -43,4 +44,29 @@ def plot_bb(img, gt, predict):
         rect = Rectangle((left, top), width, height, fill=False, edgecolor='red')
         ax.add_patch(rect)
     # Show the plot
+    plt.show()
+
+def plot_optical_flow(img, flow):
+    # Set stride to skip every n pixels
+    n = 10
+    stride = (slice(None, None, n), slice(None, None, n))
+
+    # Create meshgrid of x and y coordinates
+    h, w = img.shape[:2]
+    x, y = np.meshgrid(np.arange(0, w, n), np.arange(0, h, n))
+
+    # Select a subset of the optical flow data
+    u, v = flow[stride][:,:,0], flow[stride][:,:,1]
+
+    # Normalize the optical flow vectors
+    max_flow = np.max(np.abs(flow))
+    u_norm, v_norm = u / max_flow, v / max_flow
+    cmap = plt.cm.jet
+    mag = np.sqrt(u**2 + v**2)
+    norm = plt.Normalize(vmin=0, vmax=np.max(mag))
+    # Create quiver plot
+    plt.imshow(img)
+    plt.quiver(x, y, u_norm, -v_norm, mag, cmap=cmap, norm=norm, scale=10, width=0.001)
+
+    # Display the image and the quiver plot
     plt.show()
