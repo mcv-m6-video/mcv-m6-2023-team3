@@ -13,16 +13,13 @@ from plot_data import *
 from load_input import *
 from compute_metric import *
 
-path = './w1/AICity_data/train/S03/c010'
+path = './AICity_data/train/S03/c010'
 PATH_IMG_PRED = "../data_w1/pred/"
 PATH_IMG_GT = "../data_w1/flow_noc"
 PATH_IMG = "../data_w1/img"
 IMG_LIST = ["000045_10.png", "000157_10.png"]
 ERROR_THRESH = 3
 
-PATH_IMG_PRED = "./w1/data_w1/pred"
-PATH_IMG_GT = "./w1/data_w1/flow_noc"
-PATH_IMG = "./w1/data_w1/img"
 IMG_LIST = ["000045_10.png", "000157_10.png"]
 
 
@@ -32,7 +29,7 @@ def main(argv, path):
     if len(argv) > 1:
         task = float(argv[1])
     else:
-        task = 4
+        task = 3
 
     if task == 1.1:
         frame = 420
