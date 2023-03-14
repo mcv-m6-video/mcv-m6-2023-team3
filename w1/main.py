@@ -57,7 +57,8 @@ def main(argv, path):
         gt_bb_frame = gt_bb[frame_ini_pos:frame_last_pos]
         predict = calculate_predict_generate(gt_bb_frame, 50)
         plot_bb(img_frm, gt_bb_frame, predict)
-
+        predict = calculate_predict_position(gt_bb_frame, 50)
+        plot_bb(img_frm, gt_bb_frame,predict)
         study_noise = study_effect_noise(gt_bb)
         plot_ap_miou(study_noise['pos'], title="Displacement", xlabel="Max distance")
         plot_ap_miou(study_noise['size'], title="Resize", xlabel="Max distance")

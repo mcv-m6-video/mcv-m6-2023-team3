@@ -225,6 +225,23 @@ def calculate_predict_generate(gt_bb_list, prob_create, x_size=1920, y_size=1080
 
     return predict_list
 
+def calculate_predict_position(gt_bb_list, max_position):
+    """ 
+    Calculate prediction from the position distortion
+    """
+
+    predict_list = []
+    for gt_bb in gt_bb_list:
+        predicted = list(gt_bb)
+        noise_x = random.randint(0,max_position)
+        noise_y = random.randint(0,max_position)
+        predicted[1] += noise_x
+        predicted[2] += noise_y
+
+        predict_list.append(predicted)
+
+    return predict_list
+
 
 def calculate_noise_generate(gt_bb_list, prob_create, x_size=1920, y_size=1080, max_gen=5):
     """ 
