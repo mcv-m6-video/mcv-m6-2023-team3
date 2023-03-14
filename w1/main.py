@@ -1,14 +1,11 @@
 import sys
 import os
-<<<<<<< HEAD
 sys.path.append("../")
 
 
 #https://github.com/liruoteng/OpticalFlowToolkit.git
 from OpticalFlowToolkit.lib import flowlib
-=======
 import cv2
->>>>>>> 5fb29f7da46abc5a660d56b454af9b26b0eb6858
 
 import matplotlib.pyplot as plt
 from OpticalFlowToolkit.lib import flowlib
