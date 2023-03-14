@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 
 
@@ -128,3 +129,17 @@ def study_effect_noise(gt_bb_list, r_max_position = 50, r_max_size = 50, r_max_p
 
 
     return effect_noise
+
+
+def calculate_msen(gt_flow, pred_flow):
+    # Get the mask of the valid points
+    mask = gt_flow[:, :, 2] == 1
+
+    # compute the error in du and dv
+    error = gt_flow[:, :, :2]  - pred_flow[:, :, :2]
+
+    sqrt_error = np.sqrt(error**2)
+
+    error = sqrt_error.sum(-1)[mask]
+
+    return np.mean(error)
