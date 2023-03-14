@@ -142,6 +142,10 @@ Jiaqiang Ye Zhu - jiaqiang.ye@autonoma.cat
 Advait Dixit - 
 
 
+| Albert Barreiro| Manel Guzman | Jiaqiang Ye Zhu |Advait Dixit|
+|--------------|-----------|-----------|-----------|
+ |albertbarreirod@gmail.com|manelguz7@gmail.com| jiaqiangyz@gmail.com | advaitdixit99@gmail.com|
+
 Project Link: [https://github.com/mcv-m6-video/mcv-m6-2023-team3](https://github.com/mcv-m6-video/mcv-m6-2023-team3)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
