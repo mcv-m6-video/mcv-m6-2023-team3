@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 import cv2
 
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 
 def plot_ap_miou(study_noise_pos, title="AP vs MIOU", xlabel = ""):
@@ -71,3 +71,22 @@ def plot_optical_flow(img, flow):
 
     # Display the image and the quiver plot
     plt.show()
+
+import os
+def plot_histogram(title, img, gt_flow, pred_flow, save_path='.'):
+    mask = gt_flow[:, :, 2] == 1
+
+    # compute the error in du and dv
+    error_u = gt_flow[:, :, 0] - pred_flow[:, :, 0]
+    error_v = gt_flow[:, :, 1] - pred_flow[:, :, 1]
+
+    sqrt_error = np.sqrt(error_u ** 2 + error_v ** 2)
+    sqrt_error_masked = sqrt_error[mask]
+    mean = np.mean(sqrt_error_masked)
+    plt.figure()
+    plt.title(title)
+    plt.hist(sqrt_error_masked, 25, density=True, color="blue")
+    plt.axvline(mean, color='g', linestyle='dashed', linewidth=1, label=f'MSEN {round(mean, 1)}')
+    plt.legend()
+    plt.savefig(os.path.join(save_path, 'histogram'+img))
+    plt.close()
