@@ -93,6 +93,8 @@ def main(argv, path):
         flow_predict = flowlib.read_flow(os.path.join(PATH_IMG_PRED, "LKflow_000045_10.png"))
         plot_optical_flow(img, flow_gt)
         plot_optical_flow(img, flow_predict)
+        magnitudeOP(img, flow_gt)
+        magnitudeOP(img, flow_predict)
 
 
 if __name__ == "__main__":
