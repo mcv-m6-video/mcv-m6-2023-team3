@@ -1,6 +1,6 @@
 import sys
 import os
-
+import imageio
 from read_data import parse_annotations, getPredictions
 from compute_metric import calculate_ap_prec_rec_confi
 
@@ -74,6 +74,83 @@ def main(argv, path):
                                                         num_bboxes=len(sortedFrames_gt),
                                                         overlapThreshold=0.5)
             print('Model:{} mAP:{}'.format(models[model], np.mean(ap)))
+    elif task == 2:
+        plot_miou = []
+        plot_stdiou = []
+        plot_frames = []
+        
+        plot_miou, plot_stdiou = np.empty(0, ), np.empty(0, )
+
+        gif_dir = 'gif.gif'
+        save_dir = './frame'
+        gt_bbs,_,_ = parse_annotations(detection_path[0])
+        bbs = load_bb(os.path.join(path, "gt/gt.txt"))
+        with imageio.get_writer(gif_dir, mode='I') as writer:
+            for i in range(1000,1800):
+                gt_array_bbs = []
+                array_bbs = []
+                for gt_bbx in gt_bbs:
+                    if gt_bbx[0] == i:
+                        # Get the bounding box coordinates
+                        gt_left = gt_bbx[1]
+                        gt_top = gt_bbx[2]
+                        gt_right = gt_left + gt_bbx[3]
+                        gt_bottom = gt_top + gt_bbx[4]
+
+                        no_gt_bbx = [gt_left,gt_top,gt_right,gt_bottom]
+                        gt_array_bbs.append(no_gt_bbx)
+
+                print(gt_array_bbs)
+
+                for bbx in bbs:
+                    if bbx[0] == i:
+                        # Get the bounding box coordinates
+                        left = bbx[1]
+                        top = bbx[2]
+                        right = left + bbx[3]
+                        bottom = top + bbx[4]
+
+                        no_bbx = [left,top,right,bottom]
+                        array_bbs.append(no_bbx)
+
+                print(array_bbs)
+                if array_bbs :
+                    miou,stdiou = compute_miou(gt_array_bbs,array_bbs)
+
+                    plot_miou = np.hstack((plot_miou, miou))
+                    plot_stdiou = np.hstack((plot_stdiou, stdiou))
+                    
+                    # plot_stdiou.append(stdiou)
+                    # plot_miou.append(miou)
+                    plot_frames.append(i)
+
+                    print('MIOU:',miou)
+                    print('STDIOU:',stdiou)
+
+                    x = plot_frames
+                    y = plot_miou
+
+                    # Create a figure and axis object
+                    fig, ax = plt.subplots()
+
+                    # Plot the data as a line
+                    plt.fill(np.append(x, x[::-1]), np.append(plot_miou + plot_stdiou, (plot_miou - plot_stdiou)[::-1]), 'powderblue',
+                                    label='STD IoU')
+                    ax.plot(x, y, linewidth=0.5)
+
+                    # Set the axis labels and title
+                    ax.set_xlabel('Frames')
+                    ax.set_ylabel('mIOU')
+                    ax.set_title('mIOU mask RCNN')
+
+                    ax.set_ylim([0, 1])
+                    ax.set_xlim([1000, 1800])
+
+                    plt.savefig(os.path.join(save_dir, str(i) + '.png'))
+                    plt.close()
+
+                    image = imageio.imread(os.path.join(save_dir, str(i) + '.png'))
+                    writer.append_data(image)            
 
     elif task == 3:
         for img in IMG_LIST:

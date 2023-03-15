@@ -339,6 +339,46 @@ def calculate_msen(gt_flow, pred_flow):
 
     return msen
 
+def compute_iou(bb_gt, bb):
+    """
+    iou = compute_iou(bb_gt, bb)
+    Compute IoU between bboxes from ground truth and a single bbox.
+    bb_gt: Ground truth bboxes
+        Array of (num, bbox), num:number of boxes, bbox:(xmin,ymin,xmax,ymax)
+    bb: Detected bbox
+        Array of (bbox,), bbox:(xmin,ymin,xmax,ymax)
+    """
+    bb_gt = np.array(bb_gt)
+    # intersection
+    ixmin = np.maximum(bb_gt[:, 0], bb[0])
+    iymin = np.maximum(bb_gt[:, 1], bb[1])
+    ixmax = np.minimum(bb_gt[:, 2], bb[2])
+    iymax = np.minimum(bb_gt[:, 3], bb[3])
+    iw = np.maximum(ixmax - ixmin + 1., 0.)
+    ih = np.maximum(iymax - iymin + 1., 0.)
+    inters = iw * ih
+
+    # union
+    uni = ((bb[2] - bb[0] + 1.) * (bb[3] - bb[1] + 1.) +
+           (bb_gt[:, 2] - bb_gt[:, 0] + 1.) *
+           (bb_gt[:, 3] - bb_gt[:, 1] + 1.) - inters)
+
+    return inters / uni
+
+#Inspiration from https://github.com/mcv-m6-video/mcv-m6-2021-team3/tree/main/Week1
+
+def compute_miou(gt_frame, dets_frame):
+    """
+    Computes the mean iou by averaging the individual iou results.
+    :param gt_frame: Ground truth bboxes
+    :param dets_frame: list of detected bbox for each frame
+    :return: Mean Intersection Over Union value, Standard Deviation of the IoU
+    """
+    iou = []
+    for det in dets_frame:
+        iou.append(np.max(compute_iou(gt_frame, det)))
+
+    return np.mean(iou), np.std(iou)
 
 def calculate_pepn(gt_flow, pred_flow, th):
     """
