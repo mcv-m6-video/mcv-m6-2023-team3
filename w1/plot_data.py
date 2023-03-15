@@ -4,6 +4,7 @@ from matplotlib.patches import Rectangle
 from PIL import Image
 import numpy as np
 import cv2
+import flow_vis
 
 #matplotlib.use('TkAgg')
 
@@ -12,7 +13,7 @@ def plot_ap_miou(study_noise_pos, title="AP vs MIOU", xlabel = ""):
     
     # Separate x and y values into separate lists
     distance = [x for x, _ in study_noise_pos]
-    AP_values = [y[1] for _, y in study_noise_pos] #TODO
+    AP_values = [y[1] for _, y in study_noise_pos]
     MIOU_values = [y[0] for _, y in study_noise_pos]
 
     # Create a scatter plot
@@ -90,3 +91,12 @@ def plot_histogram(title, img, gt_flow, pred_flow, save_path='.'):
     plt.legend()
     plt.savefig(os.path.join(save_path, 'histogram'+img))
     plt.close()
+
+def magnitudeOP(img, flow_img):
+    flow_color = flow_vis.flow_to_color(flow_img[:, :, :2], convert_to_bgr=False)
+    plt.imshow(flow_color)
+    plt.imshow(img, alpha=0.2, cmap='gray')
+    plt.title('Magnitude OF')
+    plt.xticks([])
+    plt.yticks([])
+    plt.show()
