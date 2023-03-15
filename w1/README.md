@@ -13,3 +13,7 @@ During the first week of our project, our team accomplished several objectives, 
 ## Slides
 
 The slides for w1 are available [here](https://docs.google.com/presentation/d/1tblLMqS2rwEGRwNK6NIIsIg-r4ZXQbJeovDwc3PPRDc/edit#slide=id.p).
+
+## Requirements. 
+
+In order to run the code you will need to clone the repository https://github.com/liruoteng/OpticalFlowToolkit.git to read the optical flow from the Kitty dataset 
