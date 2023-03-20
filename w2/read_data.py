@@ -1,5 +1,6 @@
 import numpy as np
 import xmltodict
+import cv2
 
 
 def parse_annotations(path, isGT=False, startFrame=0):
@@ -146,3 +147,24 @@ def getPredictions(path, isGT=False):
 
     # Return
     return detectedInfo
+
+class VideoData:
+    def __init__(self, video_path):
+        self.video_data = cv2.VideoCapture(video_path)
+        self.width = int(self.video_data.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.video_data.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.num_frames = int(self.video_data.get(cv2.CAP_PROP_FRAME_COUNT))
+
+
+    def get_number_frames(self):
+        return self.num_frames
+
+    def conver_slice_to_grayscale(self, start_frame, last_frame):
+        frames = []
+        for i in range(start_frame, last_frame+1):
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+            image = self.cap.read()[1]
+            image = cv2.cvtColor(image, self.color_transform)
+            image = image.reshape(image.shape[0], image.shape[1], self.channels)
+            frames[i] = image
+        return frames

@@ -1,19 +1,31 @@
 # Import required packages
+import sys
+import os
+
+
+import cv2
+
 from compute_metric import *
-from models import GaussianModel
+from models import GaussianModel, AdaptativeBackEstimator
 from read_data import *
 
 
+sys.path.append("../.")
+from util.load_input import load_bb, load_frames
+AICITY_DATA_PATH = '../AICity_data/train/S03/c010'
+
+# Read gt file
+ANOTATIONS_PATH = 'ai_challenge_s03_c010-full_annotation.xml'
+
+
 def task1():
-    # Read gt file
-    path = 'ai_challenge_s03_c010-full_annotation.xml'
 
     # Compute the mean and variance for each of the pixels along the 25% of the video
     gaussianModel = GaussianModel(path="../AICity_data/train/S03/c010/01_vdo.avi", colorSpace="gray")
 
     # Load gt for(25-100)
     length = gaussianModel.find_length()
-    gtInfo = parse_annotations(path, isGT=True, startFrame=int(length*0.25))
+    gtInfo = parse_annotations(ANOTATIONS_PATH, isGT=True, startFrame=int(length*0.25))
 
     # Model background
     gaussianModel.calculate_mean_std()
@@ -25,6 +37,24 @@ def task1():
     rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
     print('mAP:', ap)
     print('Mean IoU:', meanIoU)
+
+def task2():
+    #gt_bb = load_bb(os.path.join(AICITY_DATA_PATH, "gt/gt.txt"))
+    
+    #Load the video
+    video_data = VideoData((os.path.join(AICITY_DATA_PATH, "vdo.avi")))
+
+    # Load gt for(25-100)
+    length = video_data.get_number_frames()
+    video_data_train = video_data.conver_slice_to_grayscale(length*0.25, length)
+    video_data_test = video_data.conver_slice_to_grayscale(length*0.25, length)
+
+    gtInfo = parse_annotations(os.path.join("..", ANOTATIONS_PATH), isGT=True, startFrame=int(length*0.25))
+
+    roi = cv2.imread(os.path.join(AICITY_DATA_PATH,'roi.jpg'), cv2.IMREAD_GRAYSCALE)
+    bckg_estimator = AdaptativeBackEstimator(roi)
+    bckg_estimator.train(video_data_train)
+    detections, model = bckg_estimator.evaluate(video_data_test)
 
 
 task1()

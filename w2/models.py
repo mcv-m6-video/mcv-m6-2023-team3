@@ -121,3 +121,75 @@ class GaussianModel:
 
         # Return
         return predictionInfo, num_boxes
+
+
+
+class AdaptativeBackEstimator():
+    def __init__(self, roi, color_format="grayscale") -> None:
+        self.color_format = color_format
+        self.roi  = roi
+
+    def train(self, video_frames):
+        len_video_frames = len(video_frames)
+
+        mean_img = np.zeros([self.height, self.width], dtype=np.float32)
+
+
+        for i in range(len_video_frames):
+            img = video_frames[i]
+            mean_img = mean_img + img/len_video_frames
+            std_img = std_img + ((mean_img - img)**2) / (len_video_frames-1)
+        
+        std_img = np.sqrt(std_img)
+        
+        self.mean = mean_img
+        self.std = std_img
+        return mean_img, std_img
+    
+    def evaluate(self, video_frames, rho=0.02, alpha=4,):
+        # Update background model
+        foreground_gaussian_model = (np.abs(video_frames-self.mean) >= alpha * (self.std + 2))
+        foreground_gaussian_model = foreground_gaussian_model * self.roi
+        bg = ~foreground_gaussian_model
+        
+        self.mean[bg] = rho * video_frames[bg] + (1-rho) * self.mean[bg]
+        self.std[bg] = np.sqrt(rho * (video_frames[bg] - self.mean[bg])**2 + (1-rho) * self.std[bg]**2)
+        
+        filtered_foreground_gaussian_model = self.morphological_filtering(foreground_gaussian_model.astype(np.uint8))
+
+        detections=[]
+        for frame in len(video_frames):
+            detection = findBBOX(frame)
+            detections.apped(detection)
+
+        return detections, filtered_foreground_gaussian_model
+
+
+    #https://github.com/mcv-m6-video/mcv-m6-2022-team3/blob/main/week2/morphology_utils.py
+    def morphological_filtering(self, mask):
+        # 1. Remove noise
+        mask = cv2.medianBlur(mask, 5)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+        # 2. Connect regions and remove shadows
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 15))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 10))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        
+        # 3. Fill convex hull of connected components
+        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        hull_list = []
+        for i in range(len(contours)):
+            hull = cv2.convexHull(contours[i])
+            hull_list.append(hull)
+        
+        mask2 = np.zeros_like(mask)
+        for i in range(len(hull_list)):
+            mask2 = cv2.drawContours(mask2, hull_list, i, color=(1), thickness=cv2.FILLED)
+        mask = mask2
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50, 50))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+        return mask
+
