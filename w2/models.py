@@ -12,7 +12,7 @@ def findBBOX(mask):
     minW = 100
     maxW = 1920 / 2
 
-    contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     box = []
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
@@ -63,7 +63,11 @@ class GaussianModel:
 
         # Calculate mean and std
         self.mean = np.mean(frames, axis=0)
-        self.std = np.std(frames, axis=0)
+ 
+        t,r,w,chs = frames.shape
+        self.std = np.zeros((r,w,chs))
+        for ch in range(chs):
+            self.std[:,:,ch]=np.std(frames[:,:,:,ch], axis=0)
 
         # Save the mean and std
         with open('mean.pkl', 'wb') as handle:
@@ -91,11 +95,9 @@ class GaussianModel:
 
             # Calculate mask by criterion
             mask = abs(image - self.mean) >= (alpha * self.std+2)
+            mask = np.logical_or.reduce(mask, axis=2)
             mask = mask * 1.0
-            mask = mask.reshape(mask.shape[0], mask.shape[1], self.channels)
-
-            if self.channels > 1:
-                mask = cv2.cvtColor(mask, self.cv2.COLOR_BGR2GRAY)
+            mask = mask.reshape(mask.shape[0], mask.shape[1], 1)
 
             # Denoise mask
             kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
