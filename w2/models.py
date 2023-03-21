@@ -3,7 +3,9 @@ import pickle
 import cv2
 import numpy as np
 from tqdm import trange
-
+import os
+import imageio
+import matplotlib.pyplot as plt
 
 # Help from https://github.com/mcv-m6-video/mcv-m6-2021-team7/tree/main/week2
 def findBBOX(mask):
@@ -12,7 +14,10 @@ def findBBOX(mask):
     minW = 100
     maxW = 1920 / 2
 
-    contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if cv2.__version__ == "3.4.2":
+        _, contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    else:
+        contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     box = []
     for contour in contours:
@@ -43,13 +48,111 @@ class GaussianModel:
             self.channels = 1
         elif self.colorSpace == "hsv":
             self.color_transform = cv2.COLOR_BGR2HSV
+        elif self.colorSpace == "hs":
+            self.color_transform = cv2.COLOR_BGR2HSV
+            self.channels = 2
+        elif self.colorSpace == "h":
+            self.color_transform = cv2.COLOR_BGR2HSV
+            self.channels = 1
         elif self.colorSpace == "rgb":
             self.color_transform = cv2.COLOR_BGR2RGB
+        elif self.colorSpace == "yuv":
+            self.color_transform = cv2.COLOR_BGR2Luv
+            self.channels = 2
+        elif self.colorSpace == "xyz":
+            self.color_transform = cv2.COLOR_BGR2XYZ
+            self.channels = 2
 
     # Function to find length
     def find_length(self):
         return self.num_frames
 
+    def get_video_rec_25(self):
+
+        start = int(self.num_frames * 0.03)
+        len_25 = int(self.num_frames * 0.15)
+        frames = np.zeros((len_25, self.height, self.width, self.channels), dtype=np.uint8)
+        save_dir = './frame'
+        gif_dir = 'gif.gif'
+        point = (400,600)
+        # Loop over the frames
+        with imageio.get_writer(gif_dir, mode='I') as writer:
+            for i in trange(start, len_25, desc='Video rect'):
+                if (i - start) % 3 == 0:
+                    self.cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+                    image = self.cap.read()[1]
+                    image = cv2.cvtColor(image, self.color_transform)
+                    if self.colorSpace != "gray":
+                        image = image[:,:,:self.channels]
+                    image = image.reshape(image.shape[0], image.shape[1], self.channels)
+                    frames[i] = image
+                    x1, y1 = point[0]-5, point[1]-5   # top-left corner
+                    x2, y2 = point[0]+5, point[1]+5   # bottom-right corner
+                    
+                    image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+                    cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                    cv2.imwrite(os.path.join(save_dir, str(i) + '.png'), image)
+                    image = imageio.imread(os.path.join(save_dir, str(i) + '.png'))
+                    writer.append_data(image)
+
+    def get_video_rec_25_plot(self):
+        # Use 25 percent of the frames
+        start = int(self.num_frames * 0.03)
+        len_25 = int(self.num_frames * 0.15)
+        frames = np.zeros((len_25-start, self.height, self.width, self.channels), dtype=np.uint8)
+        save_dir = './frame'
+        gif_dir = 'gif.gif'
+        point = (400,600)
+        plot_frames = []
+        plot_mean = []
+        plot_std = []
+        # Loop over the frames
+        with imageio.get_writer(gif_dir, mode='I') as writer:
+            for i in trange(start, len_25, desc='Video rect'):
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+                image = self.cap.read()[1]
+                image = cv2.cvtColor(image, self.color_transform)
+                if self.colorSpace != "gray":
+                    image = image[:,:,:self.channels]
+                image = image.reshape(image.shape[0], image.shape[1], self.channels)
+                frames[i-start] = image
+
+                plot_frames.append(i)
+                
+
+                plot_mean = np.hstack((plot_mean, np.mean(frames[:i-start+1,point[0],point[1]], axis=0)))      
+                plot_std  = np.hstack((plot_std, np.std(frames[:i-start+1,point[0],point[1]], axis=0)))
+                if (i - start) % 3 == 0:
+                    fig, ax = plt.subplots()
+                    
+                    ax.plot(plot_frames, plot_mean, linewidth=0.5, label='mean')
+                    plt.fill(np.append(plot_frames, plot_frames[::-1]), np.append(plot_mean + plot_std, (plot_mean - plot_std)[::-1]), 'powderblue',
+                                    label='std')
+                    ax.plot(plot_frames, frames[:i-start+1,point[0],point[1]], linewidth=0.5, label='gray scale pixel value')
+
+                    ax.set_xlabel('Frames')
+                    ax.set_ylabel('')
+                    ax.set_title('')
+
+                    ax.set_ylim([150, 190])
+                    ax.set_xlim([start, len_25])
+                    plt.legend(loc='upper center')
+                    plt.savefig(os.path.join(save_dir, str(i) + '.png'))
+                    plt.close()
+                    image = imageio.imread(os.path.join(save_dir, str(i) + '.png'))
+                    writer.append_data(image)
+
+    def reduce_channels(self, image):
+        if self.colorSpace == "hs":
+            return image[:,:,[0,1]]
+        elif self.colorSpace == "h":
+            return image[:,:,0]
+        elif self.colorSpace == "yuv":
+            return image[:,:,[1,2]]
+        elif self.colorSpace == "xyz":
+            return image[:,:,[0,2]]
+        else:
+            return image
     def calculate_mean_std(self):
         # Use 25 percent of the frames
         len_25 = int(self.num_frames * 0.25)
@@ -60,6 +163,7 @@ class GaussianModel:
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, i)
             image = self.cap.read()[1]
             image = cv2.cvtColor(image, self.color_transform)
+            image = self.reduce_channels(image)
             image = image.reshape(image.shape[0], image.shape[1], self.channels)
             frames[i] = image
 
@@ -78,7 +182,7 @@ class GaussianModel:
             pickle.dump(self.std, handle)
 
     # Foreground extraction task 1
-    def model_foreground(self, alpha):
+    def model_foreground(self, alpha, gt):
         # From 25-100
         start = int(self.num_frames * 0.25)
         end = int(self.num_frames)
@@ -87,33 +191,49 @@ class GaussianModel:
         predictedBBOX = []
         predictedFrames = []
         count = 0
+        with imageio.get_writer("alpha10.gif", mode='I') as writer:
+            # Loop over the frames
+            for i in trange(start, end, desc='Foreground extraction'):
+                # Read the image
+                image = self.cap.read()[1]
+                image = cv2.cvtColor(image, self.color_transform)
+                image = image.reshape(image.shape[0], image.shape[1], self.channels)
 
-        # Loop over the frames
-        for i in trange(start, end, desc='Foreground extraction'):
-            # Read the image
-            image = self.cap.read()[1]
-            image = cv2.cvtColor(image, self.color_transform)
-            image = image.reshape(image.shape[0], image.shape[1], self.channels)
+                # Calculate mask by criterion
+                mask = abs(image - self.mean) >= (alpha * self.std + 2)
+                mask = np.logical_or.reduce(mask, axis=2)
+                mask = mask * 1.0
+                mask = mask.reshape(mask.shape[0], mask.shape[1], 1)
 
-            # Calculate mask by criterion
-            mask = abs(image - self.mean) >= (alpha * self.std + 2)
-            mask = np.logical_or.reduce(mask, axis=2)
-            mask = mask * 1.0
-            mask = mask.reshape(mask.shape[0], mask.shape[1], 1)
+                # Denoise mask
+                kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
+                kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
 
-            # Denoise mask
-            kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+                opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel1)
+                closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel2)
 
-            opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel1)
-            closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel2)
+                # Find the box
+                bboxFrame = findBBOX(closing)
+                predictedBBOX.append(bboxFrame)
+                predictedFrames.append(i)
+        
+                gtBoxes = gt[i-start]['bbox']
+                mRGB = np.zeros((closing.shape[0], closing.shape[1], 3))
+                mRGB[:, :, 0] = closing*255
+                mRGB[:, :, 1] = closing*255
+                mRGB[:, :, 2] = closing*255
 
-            # Find the box
-            bboxFrame = findBBOX(closing)
-            predictedBBOX.append(bboxFrame)
-            predictedFrames.append(i)
+                for k in range(len(gtBoxes)):
+                    gbox = gtBoxes[k]
+                    if gbox is not None:
+                        cv2.rectangle(mRGB, (int(gbox[0]), int(gbox[1])), (int(gbox[2]), int(gbox[3])), (0, 0, 255), 2)
+                for b in bboxFrame:
+                    cv2.rectangle(mRGB, (b[0], b[1]), (b[2], b[3]), (100, 255, 0), 2)
 
-        # Make the format same as last week
+                cv2.imwrite(os.path.join("output", str(i) + '.png'), mRGB)
+                image = imageio.imread(os.path.join("output", str(i) + '.png'))
+                writer.append_data(image)
+    # Make the format same as last week
         predictionInfo = []
         num_boxes = 0
 
@@ -140,6 +260,7 @@ class GaussianModel:
             # Read the image
             image = self.cap.read()[1]
             image = cv2.cvtColor(image, self.color_transform)
+            image = self.reduce_channels(image)
             image = image.reshape(image.shape[0], image.shape[1], self.channels)
 
             if self.mask_previous is not None:

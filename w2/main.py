@@ -10,11 +10,39 @@ AICITY_DATA_PATH = '../AICity_data/train/S03/c010'
 # Read gt file
 ANOTATIONS_PATH = 'ai_challenge_s03_c010-full_annotation.xml'
 
+task1_gifs = False
 
 def task1():
     # Compute the mean and variance for each of the pixels along the 25% of the video
     gaussianModel = GaussianModel(
-        path="../AICity_data/train/S03/c010/01_vdo.avi",
+        path="../AICity_data/train/S03/c010/vdo.avi",
+        colorSpace="gray")
+    
+    if task1_gifs:
+        gaussianModel.get_video_rec_25()
+        gaussianModel.get_video_rec_25_plot()
+
+
+    # Load gt for(25-100)
+    length = gaussianModel.find_length()
+    gtInfo = parse_annotations(ANOTATIONS_PATH, isGT=True, startFrame=int(length * 0.25))
+
+    # Model background
+    gaussianModel.calculate_mean_std()
+
+    # Separate foreground from background and calculate map
+    alpha = 10
+    print('Alpha:', alpha)
+    predictionsInfo, num_bboxes = gaussianModel.model_foreground(alpha=alpha, gt=gtInfo)
+
+    rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
+    print('mAP:', ap)
+    print('Mean IoU:', meanIoU)
+
+def task2():
+    # Compute the mean and variance for each of the pixels along the 25% of the video
+    gaussianModel = GaussianModel(
+        path="../AICity_data/train/S03/c010/vdo.avi",
         colorSpace="gray")
 
     # Load gt for(25-100)
@@ -32,8 +60,7 @@ def task1():
     rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
     print('mAP:', ap)
     print('Mean IoU:', meanIoU)
-
-
+"""
 def task2():
     random_search = False
     # gt_bb = load_bb(os.path.join(AICITY_DATA_PATH, "gt/gt.txt"))
@@ -117,11 +144,11 @@ def task2():
         rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
         print('mAP:', ap)
         print('Mean IoU:', meanIoU)
-
+"""
 
 def task4():
     # Compute the mean and variance for each of the pixels along the 25% of the video
-    gaussianModel = GaussianModel(path="../AICity_data/train/S03/c010/01_vdo.avi", colorSpace="rgb")
+    gaussianModel = GaussianModel(path="../AICity_data/train/S03/c010/vdo.avi", colorSpace="hs")
 
     # Load gt for(25-100)
     length = gaussianModel.find_length()
@@ -131,12 +158,12 @@ def task4():
     gaussianModel.calculate_mean_std()
 
     # Separate foreground from background and calculate map
-    alpha = [10]
+    alpha = [8]
     print('Alpha:', alpha)
-    predictionsInfo, num_bboxes = gaussianModel.model_foreground(alpha=alpha)
-    rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.4)
+    predictionsInfo, num_bboxes = gaussianModel.model_foreground_Adaptive(alpha=alpha, rho=0.005)
+    rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
     print('mAP:', ap)
     print('Mean IoU:', meanIoU)
 
 
-task1()
+task4()
