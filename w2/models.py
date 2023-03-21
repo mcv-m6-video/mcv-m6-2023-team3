@@ -12,7 +12,11 @@ def findBBOX(mask):
     minW = 100
     maxW = 1920 / 2
 
-    contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if cv2.__verison__.startwith("3."):
+        _, contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    else:       
+        contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
     box = []
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
@@ -125,20 +129,23 @@ class GaussianModel:
 
 
 class AdaptativeBackEstimator():
-    def __init__(self, roi, color_format="grayscale") -> None:
+    def __init__(self, roi, size, color_format="grayscale") -> None:
         self.color_format = color_format
         self.roi  = roi
+        self.height= size[0]
+        self.width= size[1]
 
     def train(self, video_frames):
         len_video_frames = len(video_frames)
 
         mean_img = np.zeros([self.height, self.width], dtype=np.float32)
+        std_img = np.zeros([self.height, self.width], dtype=np.float32)
 
-
-        for i in range(len_video_frames):
-            img = video_frames[i]
-            mean_img = mean_img + img/len_video_frames
-            std_img = std_img + ((mean_img - img)**2) / (len_video_frames-1)
+        for frame in video_frames:
+            mean_img = mean_img + frame/len_video_frames
+            
+        for frame in video_frames:   
+            std_img = std_img + ((mean_img - frame)**2) / (len_video_frames-1)
         
         std_img = np.sqrt(std_img)
         
@@ -158,11 +165,17 @@ class AdaptativeBackEstimator():
         filtered_foreground_gaussian_model = self.morphological_filtering(foreground_gaussian_model.astype(np.uint8))
 
         detections=[]
-        for frame in len(video_frames):
+        predictionInfo = []
+        num_boxes = 0
+        for idx, frame in enumerate(filtered_foreground_gaussian_model):
             detection = findBBOX(frame)
             detections.apped(detection)
+            predictionInfo.append({"frame": idx, "bbox": np.array(detection)})
+            num_boxes = num_boxes + len(detection)
 
-        return detections, filtered_foreground_gaussian_model
+        # Return
+        return predictionInfo, num_boxes
+
 
 
     #https://github.com/mcv-m6-video/mcv-m6-2022-team3/blob/main/week2/morphology_utils.py

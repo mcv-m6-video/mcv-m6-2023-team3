@@ -149,22 +149,31 @@ def getPredictions(path, isGT=False):
     return detectedInfo
 
 class VideoData:
-    def __init__(self, video_path):
+    def __init__(self, video_path, color="gray"):
         self.video_data = cv2.VideoCapture(video_path)
         self.width = int(self.video_data.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.video_data.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.num_frames = int(self.video_data.get(cv2.CAP_PROP_FRAME_COUNT))
-
+        if color == "gray":
+            self.color_transform = cv2.COLOR_BGR2GRAY
+        elif self.colorSpace == "hsv":
+            self.color_transform = cv2.COLOR_BGR2HSV
+        else:
+            self.color_transform = cv2.COLOR_BGR2RGB
 
     def get_number_frames(self):
         return self.num_frames
 
     def conver_slice_to_grayscale(self, start_frame, last_frame):
+        #frames = np.zeros((self.width, self.height, self.num_frames))
         frames = []
-        for i in range(start_frame, last_frame+1):
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, i)
-            image = self.cap.read()[1]
+        for i in range(start_frame, last_frame, 1):
+            self.video_data.set(cv2.CAP_PROP_POS_FRAMES, i)
+            image = self.video_data.read()[1]
             image = cv2.cvtColor(image, self.color_transform)
-            image = image.reshape(image.shape[0], image.shape[1], self.channels)
-            frames[i] = image
+            #print(np.shape(image))
+            #image = image.reshape(image.shape[0], image.shape[1], self.channels)
+            frames.append(image)
+        frames = np.array(frames)
+        print(np.shape(frames))
         return frames
