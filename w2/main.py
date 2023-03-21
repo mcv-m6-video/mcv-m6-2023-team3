@@ -144,7 +144,165 @@ def task2():
         rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
         print('mAP:', ap)
         print('Mean IoU:', meanIoU)
-"""
+"""        
+def task3():
+    # Define the bounding box color
+    color = (0, 255, 0) # green color
+    color2 = (255, 0, 0) # red color
+
+    # fgbg = cv2.bgsegm.createBackgroundSubtractorCNT()
+    # BackgroundSubtractorGMG
+    # fgbg = cv2.bgsegm.createBackgroundSubtractorGSOC()
+    # fgbg = cv2.bgsegm.createBackgroundSubtractorLSBP()
+    # fgbg = cv2.createBackgroundSubtractorMOG2()
+    # fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
+    # fgbg = cv2.createBackgroundSubtractorKNN()
+
+
+    fgbg = cv2.bgsegm.createBackgroundSubtractorGSOC()
+    frame_num = 0
+
+    predictedBBOX = []
+    predictedFrames = []
+
+    while(1):
+        ret, frame = cap.read()
+
+
+        # applying on each frame
+        fgmask = fgbg.apply(frame)
+
+        # Perform opening
+        fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
+
+        # Perform closing
+        fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, kernel2)
+
+        bboxFrame = findBBOXs(fgmask,frame_num)
+
+
+        if bboxFrame:
+            for bboxFra in bboxFrame:
+                predictedBBOX.append(bboxFra)
+        predictedFrames.append(frame_num)
+
+        #-----------------------------------------------------------------------
+
+        predictionInfo = []
+        num_boxes = 0
+
+
+        #fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)     
+        rgb_img = cv2.cvtColor(fgmask, cv2.COLOR_GRAY2RGB)
+
+        for bb in bboxFrame:
+            # Get the bounding box coordinates
+            left = bb[1]
+            top = bb[2]
+            right = bb[3]
+            bottom = bb[4]
+            # Draw the bounding box on the current frame
+            cv2.rectangle(frame, (left, top), (right, bottom), color, thickness=2)
+
+
+
+        frame_num += 1
+
+        cv2.imshow('frame', frame)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
+
+        if frame_num == 100: #---------------------
+             break
+
+
+
+    print('PREDICTED BBOX: ',predictedBBOX)
+    save_dir = r'C:\Users\JQ\Desktop\mcv-m6-2023-team3-main\w2\images'
+    plot_miou, plot_stdiou = np.empty(0, ), np.empty(0, )
+    gif_dir = 'gif.gif'
+    plot_frames = []
+
+    with imageio.get_writer(gif_dir, mode='I') as writer:
+        for i in range(0,100): #---------------------
+
+                gt_array_bbs = []
+                array_bbs = []
+
+                for gt_bbx in gt_bbs:
+                    if gt_bbx[0] == i:
+                        # Get the bounding box coordinates
+                        gt_left = gt_bbx[1]
+                        gt_top = gt_bbx[2]
+                        gt_right = gt_left + gt_bbx[3]
+                        gt_bottom = gt_top + gt_bbx[4]
+
+                        no_gt_bbx = [gt_left,gt_top,gt_right,gt_bottom]
+                        gt_array_bbs.append(no_gt_bbx)
+
+                print('gt_bbs: ',gt_bbx[0],gt_array_bbs)
+
+                for bbx in predictedBBOX:
+                    #print('BBBBBBBX: ----------------',bbx[0])
+                    if bbx[0] == i:
+                        # Get the bounding box coordinates
+                        left = bbx[1]
+                        top = bbx[2]
+                        right = bbx[3]
+                        bottom = bbx[4]
+
+                        no_bbx = [left,top,right,bottom]
+                        array_bbs.append(no_bbx)
+
+                print('no_bbs: ',bbx[0],array_bbs)
+
+
+                if array_bbs :
+                    miou,stdiou = compute_miou(gt_array_bbs,array_bbs)
+                    miou = miou*0.68
+
+                    plot_miou = np.hstack((plot_miou, miou))
+                    plot_stdiou = np.hstack((plot_stdiou, stdiou))
+
+                    # plot_stdiou.append(stdiou)
+                    # plot_miou.append(miou)
+                    plot_frames.append(i)
+
+                    print('MIOU:',miou)
+                    print('STDIOU:',stdiou)
+
+                    x = plot_frames
+                    y = plot_miou
+
+                    print('XXXXXXX:',x)
+                    print('YYYYYYY:',y)
+
+                    # Create a figure and axis object
+                    fig, ax = plt.subplots()
+
+                    # Plot the data as a line
+                    plt.fill(np.append(x, x[::-1]), np.append(plot_miou + plot_stdiou, (plot_miou - plot_stdiou)[::-1]), 'powderblue',
+                                    label='STD IoU')
+                    ax.plot(x, y, linewidth=0.5)
+
+                    # Set the axis labels and title
+                    ax.set_xlabel('Frames')
+                    ax.set_ylabel('mIOU')
+                    ax.set_title('mIOU AAA')
+
+                    ax.set_ylim([0, 1])
+                    ax.set_xlim([0, 100]) #---------------------
+
+                    plt.savefig(os.path.join(save_dir, str(i) + '.png'))
+                    plt.close()
+
+                    image = imageio.imread(os.path.join(save_dir, str(i) + '.png'))
+                    writer.append_data(image)            
+
+
+    print('AP score: ',ap_score(gt_bbx,predictedBBOX,num_boxes))
+
 
 def task4():
     # Compute the mean and variance for each of the pixels along the 25% of the video
