@@ -12,7 +12,10 @@ def findBBOX(mask):
     minW = 100
     maxW = 1920 / 2
 
-    _, contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if cv2.__version__ == "3.4.2":
+        _, contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    else:
+        contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     box = []
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
