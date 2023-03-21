@@ -133,15 +133,16 @@ class GaussianModel:
 class AdaptativeBackEstimator():
     def __init__(self, roi, size, color_format="grayscale") -> None:
         self.color_format = color_format
-        self.roi  = roi
+        self.roi  = roi.reshape(roi.shape[0],roi.shape[1], 1)
         self.height= size[0]
         self.width= size[1]
+        self.channels= size[2]
 
     def train(self, video_frames):
         len_video_frames = len(video_frames)
 
-        mean_img = np.zeros([self.height, self.width], dtype=np.float32)
-        std_img = np.zeros([self.height, self.width], dtype=np.float32)
+        mean_img = np.zeros([self.height, self.width, self.channels], dtype=np.float32)
+        std_img = np.zeros([self.height, self.width, self.channels], dtype=np.float32)
 
         for frame in video_frames:
             mean_img = mean_img + frame/len_video_frames
@@ -155,28 +156,21 @@ class AdaptativeBackEstimator():
         self.std = std_img
         return mean_img, std_img
     
-    def evaluate(self, video_frames, rho=0.02, alpha=4,):
+    def evaluate(self, frame, rho=0.02, alpha=4,):
         # Update background model
-        foreground_gaussian_model = (np.abs(video_frames-self.mean) >= alpha * (self.std + 2))
+        foreground_gaussian_model = (np.abs(frame-self.mean) >= alpha * (self.std + 2))
         foreground_gaussian_model = foreground_gaussian_model * self.roi
-        bg = ~foreground_gaussian_model
+        background = ~foreground_gaussian_model
         
-        self.mean[bg] = rho * video_frames[bg] + (1-rho) * self.mean[bg]
-        self.std[bg] = np.sqrt(rho * (video_frames[bg] - self.mean[bg])**2 + (1-rho) * self.std[bg]**2)
+        self.mean[background] = rho * frame[background] + (1-rho) * self.mean[background]
+        self.std[background] = np.sqrt(rho * (frame[background] - self.mean[background])**2 + (1-rho) * self.std[background]**2)
         
         filtered_foreground_gaussian_model = self.morphological_filtering(foreground_gaussian_model.astype(np.uint8))
 
-        detections=[]
-        predictionInfo = []
-        num_boxes = 0
-        for idx, frame in enumerate(filtered_foreground_gaussian_model):
-            detection = findBBOX(frame)
-            detections.apped(detection)
-            predictionInfo.append({"frame": idx, "bbox": np.array(detection)})
-            num_boxes = num_boxes + len(detection)
+        detection = findBBOX(filtered_foreground_gaussian_model)
 
         # Return
-        return predictionInfo, num_boxes
+        return detection, filtered_foreground_gaussian_model
 
 
 

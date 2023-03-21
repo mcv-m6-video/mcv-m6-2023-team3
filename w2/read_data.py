@@ -154,8 +154,10 @@ class VideoData:
         self.width = int(self.video_data.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.video_data.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.num_frames = int(self.video_data.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.channels = 3
         if color == "gray":
             self.color_transform = cv2.COLOR_BGR2GRAY
+            self.channels = 1
         elif self.colorSpace == "hsv":
             self.color_transform = cv2.COLOR_BGR2HSV
         else:
@@ -172,8 +174,16 @@ class VideoData:
             image = self.video_data.read()[1]
             image = cv2.cvtColor(image, self.color_transform)
             #print(np.shape(image))
-            #image = image.reshape(image.shape[0], image.shape[1], self.channels)
+            image = image.reshape(image.shape[0], image.shape[1], self.channels)
             frames.append(image)
         frames = np.array(frames)
         print(np.shape(frames))
         return frames
+    
+    def convert_frame_by_idx(self, frame_idx):
+        self.video_data.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        image = self.video_data.read()[1]
+        image = cv2.cvtColor(image, self.color_transform)
+        #print(np.shape(image))
+        frame = image.reshape(image.shape[0], image.shape[1], self.channels)
+        return frame
