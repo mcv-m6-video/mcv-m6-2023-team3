@@ -11,6 +11,7 @@ During the second week of the project, we focused on exploring various image pro
 * **Task 3**: Compare with state-of-the-art
 * **Task 4**: Colour sequences
 
+
 ## Slides
 
 The slides for w2 are available [here](https://docs.google.com/presentation/d/1Vzk87VFi-S48UVvC9IeGrX8msQPG8p626TiSDeO3Lig/edit#slide=id.p).
