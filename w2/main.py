@@ -335,6 +335,6 @@ def main(argv):
         task3()
     elif task == 4:
         task4()
-task4()
+
 if __name__ == "__main__":
     main(sys.argv)
