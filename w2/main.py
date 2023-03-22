@@ -1,9 +1,11 @@
 # Import required packages
 import os
-
+import sys
 from compute_metric import *
 from models import GaussianModel, AdaptativeBackEstimator
 from read_data import *
+import matplotlib.pyplot as plt
+import imageio
 
 AICITY_DATA_PATH = '../AICity_data/train/S03/c010'
 
@@ -31,7 +33,7 @@ def task1():
     gaussianModel.calculate_mean_std()
 
     # Separate foreground from background and calculate map
-    alpha = 10
+    alpha = 500
     print('Alpha:', alpha)
     predictionsInfo, num_bboxes = gaussianModel.model_foreground(alpha=alpha, gt=gtInfo)
 
@@ -53,9 +55,9 @@ def task2():
     gaussianModel.calculate_mean_std()
 
     # Separate foreground from background and calculate map
-    alpha = 4
+    alpha = 500
     print('Alpha:', alpha)
-    predictionsInfo, num_bboxes = gaussianModel.model_foreground_Adaptive(alpha=alpha, rho=0.005)
+    predictionsInfo, num_bboxes = gaussianModel.model_foreground_Adaptive(gtInfo, alpha=alpha, rho=0.005)
 
     rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
     print('mAP:', ap)
@@ -219,7 +221,7 @@ def task3():
 
 
     print('PREDICTED BBOX: ',predictedBBOX)
-    save_dir = r'C:\Users\JQ\Desktop\mcv-m6-2023-team3-main\w2\images'
+    save_dir = './images'
     plot_miou, plot_stdiou = np.empty(0, ), np.empty(0, )
     gif_dir = 'gif.gif'
     plot_frames = []
@@ -306,7 +308,7 @@ def task3():
 
 def task4():
     # Compute the mean and variance for each of the pixels along the 25% of the video
-    gaussianModel = GaussianModel(path="../AICity_data/train/S03/c010/vdo.avi", colorSpace="hs")
+    gaussianModel = GaussianModel(path="../AICity_data/train/S03/c010/vdo.avi", colorSpace="xyz")
 
     # Load gt for(25-100)
     length = gaussianModel.find_length()
@@ -318,10 +320,25 @@ def task4():
     # Separate foreground from background and calculate map
     alpha = [8]
     print('Alpha:', alpha)
-    predictionsInfo, num_bboxes = gaussianModel.model_foreground_Adaptive(alpha=alpha, rho=0.005)
+    predictionsInfo, num_bboxes = gaussianModel.model_foreground_Adaptive(gtInfo, alpha=alpha, rho=0.005)
     rec, prec, ap, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
     print('mAP:', ap)
     print('Mean IoU:', meanIoU)
 
+def main(argv):
+    if len(argv) > 1:
+        task = float(argv[1])
+    else:
+        task = 1
 
+    if task == 1:
+        task1()
+    elif task == 2:
+        task2()
+    elif task == 3:
+        task3()
+    elif task == 4:
+        task4()
 task4()
+if __name__ == "__main__":
+    main(sys.argv)

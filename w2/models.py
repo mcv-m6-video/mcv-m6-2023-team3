@@ -246,7 +246,7 @@ class GaussianModel:
         # Return
         return predictionInfo, num_boxes
 
-    def model_foreground_Adaptive(self, alpha, rho):
+    def model_foreground_Adaptive(self, gt, alpha, rho):
         # From 25-100
         start = int(self.num_frames * 0.25)
         end = int(self.num_frames)
@@ -255,37 +255,50 @@ class GaussianModel:
         predictedBBOX = []
         predictedFrames = []
         count = 0
+        with imageio.get_writer("xyz8.gif", mode='I') as writer:
+            for i in trange(start, end, desc='Adaptive Foreground extraction'):
+                # Read the image
+                image = self.cap.read()[1]
+                image = cv2.cvtColor(image, self.color_transform)
+                image_v = self.reduce_channels(image)
+                image_v = image_v.reshape(image_v.shape[0], image_v.shape[1], self.channels)
 
-        for i in trange(start, end, desc='Adaptive Foreground extraction'):
-            # Read the image
-            image = self.cap.read()[1]
-            image = cv2.cvtColor(image, self.color_transform)
-            image = self.reduce_channels(image)
-            image = image.reshape(image.shape[0], image.shape[1], self.channels)
+                if self.mask_previous is not None:
+                    self.mean = (1 - rho) * self.mean
+                    self.std = np.sqrt(rho * (image_v * (1 - self.mask_previous) - self.mean) ** 2 + (1 - rho) * self.std ** 2)
 
-            if self.mask_previous is not None:
-                self.mean = (1 - rho) * self.mean
-                self.std = np.sqrt(rho * (image * (1 - self.mask_previous) - self.mean) ** 2 + (1 - rho) * self.std ** 2)
+                # Calculate mask by criterion
+                mask = abs(image_v - self.mean) >= (alpha * self.std + 2)
+                mask = np.logical_or.reduce(mask, axis=2)
+                mask = mask * 1.0
+                mask = mask.reshape(mask.shape[0], mask.shape[1], 1)
+                self.mask_previous = mask
 
-            # Calculate mask by criterion
-            mask = abs(image - self.mean) >= (alpha * self.std + 2)
-            mask = np.logical_or.reduce(mask, axis=2)
-            mask = mask * 1.0
-            mask = mask.reshape(mask.shape[0], mask.shape[1], 1)
-            self.mask_previous = mask
+                # Denoise mask
+                kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+                kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
 
-            # Denoise mask
-            kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+                opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel1)
+                closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel2)
 
-            opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel1)
-            closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel2)
-
-            # Find the box
-            bboxFrame = findBBOX(closing)
-            predictedBBOX.append(bboxFrame)
-            predictedFrames.append(i)
-
+                # Find the box
+        
+                gtBoxes = gt[i-start]['bbox']
+                bboxFrame = findBBOX(closing)
+                predictedBBOX.append(bboxFrame)
+                predictedFrames.append(i)
+                image = cv2.cvtColor(image, cv2.COLOR_XYZ2BGR)
+                for k in range(len(gtBoxes)):
+                    gbox = gtBoxes[k]
+                    if gbox is not None:
+                        cv2.rectangle(image, (int(gbox[0]), int(gbox[1])), (int(gbox[2]), int(gbox[3])), (0, 0, 255), 2)
+                for b in bboxFrame:
+                    cv2.rectangle(image, (b[0], b[1]), (b[2], b[3]), (100, 255, 0), 2)
+                if count < 0:
+                    cv2.imwrite(os.path.join("output", str(i) + '.png'), image)
+                    image = imageio.imread(os.path.join("output", str(i) + '.png'))
+                    writer.append_data(image)
+                    count += 1
         # Make the format same as last week
         predictionInfo = []
         num_boxes = 0
