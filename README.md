@@ -114,7 +114,7 @@ Arguments:
 
 - [Week 1: Datasets and metrics implementations](https://github.com/mcv-m6-video/mcv-m6-2023-team3/tree/main/w1)
 
-- Week 2: Background Estimation (Link not available yet)
+- [Week 2: Background Estimation](https://github.com/mcv-m6-video/mcv-m6-2023-team3/tree/main/w2)
 
 - Week 3: Oject Detection and Tracking (Link not available yet)
 
