@@ -4,17 +4,19 @@ import os
 from compute_metric import *
 from models import GaussianModel, AdaptativeBackEstimator
 from read_data import *
+from tqdm import trange
+from sklearn.model_selection import ParameterSampler
 
 AICITY_DATA_PATH = '../AICity_data/train/S03/c010'
 
 # Read gt file
-ANOTATIONS_PATH = 'ai_challenge_s03_c010-full_annotation.xml'
+ANOTATIONS_PATH = '../ai_challenge_s03_c010-full_annotation.xml'
 
 
 def task1():
     # Compute the mean and variance for each of the pixels along the 25% of the video
     gaussianModel = GaussianModel(
-        path="../AICity_data/train/S03/c010/01_vdo.avi",
+        path="../AICity_data/train/S03/c010/vdo.avi",
         colorSpace="gray")
 
     # Load gt for(25-100)
@@ -34,13 +36,10 @@ def task1():
     print('Mean IoU:', meanIoU)
 
 
-def task2():
-    random_search = False
-    # gt_bb = load_bb(os.path.join(AICITY_DATA_PATH, "gt/gt.txt"))
+def task2(random_search=True):
     print("Load video")
     # Load the video
-    video_data = VideoData(
-        video_path="../AICity_data/train/S03/c010/01_vdo.avi")
+    video_data = VideoData(video_path="../AICity_data/train/S03/c010/vdo.avi")
 
     # Load gt for(25-100)
     length = video_data.get_number_frames()
@@ -48,8 +47,9 @@ def task2():
     # video_data_test = video_data.conver_slice_to_grayscale(int(length*0.25), length)
 
     print("pasrse Annotations")
-    gtInfo = parse_annotations(path="ai_challenge_s03_c010-full_annotation.xml", isGT=True,
-                               startFrame=int(length * 0.25))
+    gtInfo = parse_annotations(
+        path=ANOTATIONS_PATH, isGT=True, startFrame=int(length * 0.25)
+    )
 
     print("Estimation")
     roi = cv2.imread(os.path.join(AICITY_DATA_PATH, 'roi.jpg'), cv2.IMREAD_GRAYSCALE)
@@ -60,57 +60,47 @@ def task2():
     del video_data_train
 
     print("Evaluation")
+    # hyperparameter search
     if random_search:
-        rSearchIterations = 5
+        alphas = np.random.choice(np.linspace(2, 4, 50), 10)
+        rhos = np.random.choice(np.linspace(0.001, 0.1, 50), 10)
+        combinations = [(alpha, rho) for alpha, rho in zip(alphas, rhos)]
+    else:
+        alphas = [2, 2.5, 3, 3.5, 4]
+        rhos = [0.005, 0.01, 0.025, 0.05, 0.1]
+        combinations = [(alpha, rho) for alpha in alphas for rho in rhos]
 
-        params = {}
-        params['alpha'] = np.arange(3, 10, 0.5)
-        params['rho'] = np.arange(0.005, 0.5, 0.005)
+    for alpha, rho in combinations:
+        num_bboxes = 0
+        predictionsInfo = []
+        detections = []
+        for idx in range(int(length * 0.25), length, 1):
+            frame = video_data.convert_frame_by_idx(idx)
+            detection, foreground_mask = bckg_estimator.evaluate(frame, rho, alpha)
+            detections.append(detections)
+            predictionsInfo.append(({"frame": idx, "bbox": np.array(detection)}))
+            num_bboxes = num_bboxes + len(detection)
 
-        # Generation of parameter candidates
-        # randomParameters = list(ParameterSampler(params, n_iter=rSearchIterations))
-        bestIteration = 0
-        bestScore = 0
-        # Uncomment to run once with best parameters
-        randomParameters = [{'alpha': 9.5, 'rho': 0.42}]
+        rec, prec, mAP, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
+        print('mAP:', mAP)
+        print('Mean IoU:', meanIoU)
 
-        for i, combination in enumerate(randomParameters):
-            print("Trial " + str(i) + " out of " + str(len(randomParameters)))
-            print("Testing the parameters:")
-            print(combination)
-
-            num_bboxes = 0
-            predictionsInfo = []
-            detections = []
-            for idx in range(int(length * 0.25), length, 1):
-                frame = video_data.convert_frame_by_idx(idx)
-                detection, foreground_mask = bckg_estimator.evaluate(frame)
-                detections.append(detections)
-                predictionsInfo.append(({"frame": idx, "bbox": np.array(detection)}))
-                num_bboxes = num_bboxes + len(detection)
-
-            rec, prec, mAP, meanIoU = ap_score(gtInfo, predictionsInfo, num_bboxes=num_bboxes, ovthresh=0.5)
-            print('mAP:', mAP)
-            print('Mean IoU:', meanIoU)
-
-            # now restore stdout function
-            # sys.stdout = sys.__stdout__
-
-            if mAP > best_map:
-                best_map = mAP
-                best_tieration = i
+        if mAP > best_map:
+            best_map = mAP
 
         print("The best mAP was: " + str(best_map))
-        print("The best params are:" + randomParameters[best_tieration])
+
     else:
+
         num_bboxes = 0
         predictionsInfo = []
         print("no random")
-        for idx in range(int(length * 0.25), length, 1):
+        for idx in trange(int(length * 0.25), length, 1):
             print("processing")
             frame = video_data.convert_frame_by_idx(idx)
+            
             # Run with the best params found 
-            detection, foreground_mask = bckg_estimator.evaluate(frame, rho=0.42, alpha=9.5)
+            detection, _ = bckg_estimator.evaluate(frame, rho=0.42, alpha=9.5)
             predictionsInfo.append(({"frame": idx, "bbox": np.array(detection)}))
             num_bboxes = num_bboxes + len(detection)
 
@@ -297,4 +287,4 @@ def task4():
     print('Mean IoU:', meanIoU)
 
 
-task1()
+task2()

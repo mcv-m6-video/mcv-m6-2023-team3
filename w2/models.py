@@ -12,7 +12,10 @@ def findBBOX(mask):
     minW = 100
     maxW = 1920 / 2
 
-    contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if cv2.__version__.startswith("3."):
+        _, contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    else:       
+        contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     box = []
     for contour in contours:
@@ -186,6 +189,7 @@ class AdaptativeBackEstimator:
         self.height = size[0]
         self.width = size[1]
         self.channels = size[2]
+        self.mask_previous = None
 
     def train(self, video_frames):
         len_video_frames = len(video_frames)
@@ -204,47 +208,30 @@ class AdaptativeBackEstimator:
         self.mean = mean_img
         self.std = std_img
         return mean_img, std_img
-
+    
     def evaluate(self, frame, rho=0.02, alpha=4, ):
         # Update background model
-        foreground_gaussian_model = (np.abs(frame - self.mean) >= alpha * (self.std + 2))
-        foreground_gaussian_model = foreground_gaussian_model * self.roi
-        background = ~foreground_gaussian_model
+        if self.mask_previous is not None:
+            self.mean = (1 - rho) * self.mean
+            self.std = np.sqrt(rho * (frame * (1 - self.mask_previous) - self.mean) ** 2 + (1 - rho) * self.std ** 2)
 
-        self.mean[background] = rho * frame[background] + (1 - rho) * self.mean[background]
-        self.std[background] = np.sqrt(
-            rho * (frame[background] - self.mean[background]) ** 2 + (1 - rho) * self.std[background] ** 2)
-        filtered_foreground_gaussian_model = self.morphological_filtering(foreground_gaussian_model.astype(np.uint8))
+        # Calculate mask by criterion
+        mask = abs(frame - self.mean) >= (alpha * self.std + 2)
+        mask = np.logical_or.reduce(mask, axis=2)
+        mask = mask * 1.0
+        mask = mask.reshape(mask.shape[0], mask.shape[1], 1)
+        self.mask_previous = mask
 
+        # Denoise mask
+        kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+
+        opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel1)
+        filtered_foreground_gaussian_model = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel2)
+
+        # Find the box
         detection = findBBOX(filtered_foreground_gaussian_model)
 
         # Return
         return detection, filtered_foreground_gaussian_model
 
-    # https://github.com/mcv-m6-video/mcv-m6-2022-team3/blob/main/week2/morphology_utils.py
-    def morphological_filtering(self, mask):
-        # 1. Remove noise
-        mask = cv2.medianBlur(mask, 5)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-
-        # 2. Connect regions and remove shadows
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 15))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 10))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-
-        # 3. Fill convex hull of connected components
-        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        hull_list = []
-        for i in range(len(contours)):
-            hull = cv2.convexHull(contours[i])
-            hull_list.append(hull)
-
-        mask2 = np.zeros_like(mask)
-        for i in range(len(hull_list)):
-            mask2 = cv2.drawContours(mask2, hull_list, i, color=1, thickness=cv2.FILLED)
-        mask = mask2
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50, 50))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-        return mask
