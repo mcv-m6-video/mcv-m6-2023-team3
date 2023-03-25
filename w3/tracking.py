@@ -59,6 +59,3 @@ def overlapTracking(frameBoundingBoxes, video_path):
 
         # Update the frame
         frame = next_frame
-overlapTracking(frameBoundingBoxes=frame_bboxes,
-                video_path="/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/AICity_data/train/S03/c010/01_vdo"
-                            ".avi")
