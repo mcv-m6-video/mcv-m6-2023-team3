@@ -7,6 +7,7 @@ import os
 import imageio
 import matplotlib.pyplot as plt
 
+
 # Help from https://github.com/mcv-m6-video/mcv-m6-2021-team7/tree/main/week2
 def findBBOX(mask):
     minH = 50
@@ -16,7 +17,7 @@ def findBBOX(mask):
 
     if cv2.__version__.startswith("3."):
         _, contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    else:       
+    else:
         contours, hierarchy = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     box = []
@@ -74,7 +75,7 @@ class GaussianModel:
         frames = np.zeros((len_25, self.height, self.width, self.channels), dtype=np.uint8)
         save_dir = './frame'
         gif_dir = 'gif.gif'
-        point = (400,600)
+        point = (400, 600)
         # Loop over the frames
         with imageio.get_writer(gif_dir, mode='I') as writer:
             for i in trange(start, len_25, desc='Video rect'):
@@ -83,12 +84,12 @@ class GaussianModel:
                     image = self.cap.read()[1]
                     image = cv2.cvtColor(image, self.color_transform)
                     if self.colorSpace != "gray":
-                        image = image[:,:,:self.channels]
+                        image = image[:, :, :self.channels]
                     image = image.reshape(image.shape[0], image.shape[1], self.channels)
                     frames[i] = image
-                    x1, y1 = point[0]-5, point[1]-5   # top-left corner
-                    x2, y2 = point[0]+5, point[1]+5   # bottom-right corner
-                    
+                    x1, y1 = point[0] - 5, point[1] - 5  # top-left corner
+                    x2, y2 = point[0] + 5, point[1] + 5  # bottom-right corner
+
                     image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
                     cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
                     cv2.imwrite(os.path.join(save_dir, str(i) + '.png'), image)
@@ -99,10 +100,10 @@ class GaussianModel:
         # Use 25 percent of the frames
         start = int(self.num_frames * 0.03)
         len_25 = int(self.num_frames * 0.15)
-        frames = np.zeros((len_25-start, self.height, self.width, self.channels), dtype=np.uint8)
+        frames = np.zeros((len_25 - start, self.height, self.width, self.channels), dtype=np.uint8)
         save_dir = './frame'
         gif_dir = 'gif.gif'
-        point = (400,600)
+        point = (400, 600)
         plot_frames = []
         plot_mean = []
         plot_std = []
@@ -113,22 +114,23 @@ class GaussianModel:
                 image = self.cap.read()[1]
                 image = cv2.cvtColor(image, self.color_transform)
                 if self.colorSpace != "gray":
-                    image = image[:,:,:self.channels]
+                    image = image[:, :, :self.channels]
                 image = image.reshape(image.shape[0], image.shape[1], self.channels)
-                frames[i-start] = image
+                frames[i - start] = image
 
                 plot_frames.append(i)
-                
 
-                plot_mean = np.hstack((plot_mean, np.mean(frames[:i-start+1,point[0],point[1]], axis=0)))      
-                plot_std  = np.hstack((plot_std, np.std(frames[:i-start+1,point[0],point[1]], axis=0)))
+                plot_mean = np.hstack((plot_mean, np.mean(frames[:i - start + 1, point[0], point[1]], axis=0)))
+                plot_std = np.hstack((plot_std, np.std(frames[:i - start + 1, point[0], point[1]], axis=0)))
                 if (i - start) % 3 == 0:
                     fig, ax = plt.subplots()
-                    
+
                     ax.plot(plot_frames, plot_mean, linewidth=0.5, label='mean')
-                    plt.fill(np.append(plot_frames, plot_frames[::-1]), np.append(plot_mean + plot_std, (plot_mean - plot_std)[::-1]), 'powderblue',
-                                    label='std')
-                    ax.plot(plot_frames, frames[:i-start+1,point[0],point[1]], linewidth=0.5, label='gray scale pixel value')
+                    plt.fill(np.append(plot_frames, plot_frames[::-1]),
+                             np.append(plot_mean + plot_std, (plot_mean - plot_std)[::-1]), 'powderblue',
+                             label='std')
+                    ax.plot(plot_frames, frames[:i - start + 1, point[0], point[1]], linewidth=0.5,
+                            label='gray scale pixel value')
 
                     ax.set_xlabel('Frames')
                     ax.set_ylabel('')
@@ -144,15 +146,16 @@ class GaussianModel:
 
     def reduce_channels(self, image):
         if self.colorSpace == "hs":
-            return image[:,:,[0,1]]
+            return image[:, :, [0, 1]]
         elif self.colorSpace == "h":
-            return image[:,:,0]
+            return image[:, :, 0]
         elif self.colorSpace == "yuv":
-            return image[:,:,[1,2]]
+            return image[:, :, [1, 2]]
         elif self.colorSpace == "xyz":
-            return image[:,:,[0,2]]
+            return image[:, :, [0, 2]]
         else:
             return image
+
     def calculate_mean_std(self):
         # Use 25 percent of the frames
         len_25 = int(self.num_frames * 0.25)
@@ -216,12 +219,12 @@ class GaussianModel:
                 bboxFrame = findBBOX(closing)
                 predictedBBOX.append(bboxFrame)
                 predictedFrames.append(i)
-        
-                gtBoxes = gt[i-start]['bbox']
+
+                gtBoxes = gt[i - start]['bbox']
                 mRGB = np.zeros((closing.shape[0], closing.shape[1], 3))
-                mRGB[:, :, 0] = closing*255
-                mRGB[:, :, 1] = closing*255
-                mRGB[:, :, 2] = closing*255
+                mRGB[:, :, 0] = closing * 255
+                mRGB[:, :, 1] = closing * 255
+                mRGB[:, :, 2] = closing * 255
 
                 for k in range(len(gtBoxes)):
                     gbox = gtBoxes[k]
@@ -233,7 +236,7 @@ class GaussianModel:
                 cv2.imwrite(os.path.join("output", str(i) + '.png'), mRGB)
                 image = imageio.imread(os.path.join("output", str(i) + '.png'))
                 writer.append_data(image)
-    # Make the format same as last week
+        # Make the format same as last week
         predictionInfo = []
         num_boxes = 0
 
@@ -265,7 +268,8 @@ class GaussianModel:
 
                 if self.mask_previous is not None:
                     self.mean = (1 - rho) * self.mean
-                    self.std = np.sqrt(rho * (image_v * (1 - self.mask_previous) - self.mean) ** 2 + (1 - rho) * self.std ** 2)
+                    self.std = np.sqrt(
+                        rho * (image_v * (1 - self.mask_previous) - self.mean) ** 2 + (1 - rho) * self.std ** 2)
 
                 # Calculate mask by criterion
                 mask = abs(image_v - self.mean) >= (alpha * self.std + 2)
@@ -282,8 +286,8 @@ class GaussianModel:
                 closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel2)
 
                 # Find the box
-        
-                gtBoxes = gt[i-start]['bbox']
+
+                gtBoxes = gt[i - start]['bbox']
                 bboxFrame = findBBOX(closing)
                 predictedBBOX.append(bboxFrame)
                 predictedFrames.append(i)
@@ -339,7 +343,7 @@ class AdaptativeBackEstimator:
         self.mean = mean_img
         self.std = std_img
         return mean_img, std_img
-    
+
     def evaluate(self, frame, rho=0.02, alpha=4, ):
         # Update background model
         if self.mask_previous is not None:
@@ -365,4 +369,3 @@ class AdaptativeBackEstimator:
 
         # Return
         return detection, filtered_foreground_gaussian_model
-
