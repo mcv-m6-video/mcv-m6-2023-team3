@@ -28,13 +28,14 @@ def parse_annotations(path, isGT=False, startFrame=0):
 
     for gt in groundTruth:
         # Extract Frames and bounding boxes
-        frame = gt[0]
-        if frame >= startFrame:
-            bbox = [gt[3], gt[4], gt[5], gt[6]]
+        if gt[2] == "car":
+            frame = [gt[0], gt[1]]
+            if frame[0] >= startFrame:
+                bbox = [gt[3], gt[4], gt[5], gt[6]]
 
-            # Add the frames and bounding boxes
-            frames.append(frame)
-            BBOX.append(bbox)
+                # Add the frames and bounding boxes
+                frames.append(frame)
+                BBOX.append(bbox)
 
     # Sort frames
     sortedFrames, sortedBbox = zip(*sorted(zip(frames, BBOX)))
