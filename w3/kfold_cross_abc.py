@@ -41,10 +41,11 @@ def strategy_c(X, k=4, epochs=100, imgsz=640):
         train_idx, val_idx = train_test_split(X, train_size=0.25, random_state=i)
         print(f"Training on Strategy C - Iteration {i}")
         model = train_and_evaluate_model(train_idx, val_idx, f'C_{i}', epochs, imgsz)
-
+"""
 if __name__ == "__main__":
     X = np.arange(255)
 
     strategy_a(X)
     strategy_b(X)
     strategy_c(X)
+"""
