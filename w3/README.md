@@ -15,6 +15,9 @@ During the third week of our project, we focused on object detection and object 
   * **Task 2.2**: Tracking with a Kalman Filter
   * **Task 2.3**: IDF1,HOTA scores
 
+## Additional information
+The annotations for task 1.2 are saved in the task 1.2 folder using the format Pascal VOC.
+
 
 ## Usage
 In order to run this project you need to execute the main.py from [the main page](https://github.com/mcv-m6-video/mcv-m6-2023-team3).
