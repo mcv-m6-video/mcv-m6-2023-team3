@@ -1,25 +1,36 @@
 # Import required packages
 import pickle
-import cv2
-from tqdm import trange
-from compute_metric import *
 
+import motmetrics as mm
+from tqdm import trange
+
+from compute_metric import *
+from read_data import *
+
+# Help from https://github.com/mcv-m6-video/mcv-m6-2021-team7/blob/main/week3
 # Get the bboxes
 frame_bboxes = []
-with (open("boxesScores1.pkl", "rb")) as openfile:
+with (open("boxesScores.pkl", "rb")) as openfile:
     while True:
         try:
             frame_bboxes.append(pickle.load(openfile))
         except EOFError:
             break
-frame_bboxes = frame_bboxes[0]
 
-# correct the data to the desired format
+# Correct the data to the desired format
 aux_frame_boxes = []
 for frame_b in frame_bboxes:
-    auxiliar, _ = zip(*frame_b)
+    auxiliar = zip(*frame_b)
     aux_frame_boxes.append(list(auxiliar))
 frame_bboxes = aux_frame_boxes
+
+
+def centroid(box):  # box [x,y,w,h]
+    x2 = box[0] + box[2]
+    y2 = box[1] + box[3]
+    x_center = (box[0] + x2) / 2
+    y_center = (box[1] + y2) / 2
+    return x_center, y_center
 
 
 # Function to perform overlap tracking
@@ -76,37 +87,57 @@ def overlapTracking(frameBoundingBoxes, video_path):
         # Update the frame
         frame = next_frame
 
-    id_colors = []
-    for i in range(len(id_per_frame)):
-        color = list(np.random.choice(range(256), size=3))
-        id_colors.append(color)
+    _, gt = parse_annotations(path="ai_challenge_s03_c010-full_annotation.xml")
 
-    # Define the codec and create VideoWriter object
-    vidCapture = cv2.VideoCapture(video_path)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('overlap_tracking.mp4', fourcc, 10.0, (1920, 1080))
-    # for each frame draw rectangles to the detected bboxes
-    for i in trange(len(frameBoundingBoxes), desc="Video"):
-        vidCapture.set(cv2.CAP_PROP_POS_FRAMES, i)
-        im = vidCapture.read()[1]
-        for id in range(len(id_per_frame)):
-            ids = id_per_frame[id]
-            if i in ids:
-                id_index = ids.index(i)
-                bbox = boudningBoxes_per_frame[id][id_index]
-                color = id_colors[id]
-                cv2.rectangle(im, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-                              (int(color[0]), int(color[1]), int(color[2])), 2)
-                cv2.putText(im, 'Object ID: ' + str(id), (int(bbox[0]), int(bbox[1]) - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (int(color[0]), int(color[1]), int(color[2])), 2)
-        cv2.imshow('Video', im)
-        out.write(im)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    # Initialize accumulator
+    acc = mm.MOTAccumulator(auto_id=True)
 
-    vidCapture.release()
-    out.release()
-    cv2.destroyAllWindows()
+    # Loop for all frames
+    for Nframe in trange(len(frame_bboxes), desc="Evaluation"):
+
+        # get the ids of the tracks from the ground truth at this frame
+        gt_list = [item[1] for item in gt if item[0] == Nframe]
+        gt_list = np.unique(gt_list)
+
+        # get the ids of the detected tracks at this frame
+        pred_list = []
+        for ID in range(len(id_per_frame)):
+            aux = np.where(np.array(id_per_frame[ID]) == Nframe)[0]
+            if len(aux) > 0:
+                pred_list.append(int(ID))
+
+        # Compute the distance for each pair
+        distances = []
+        for i in range(len(gt_list)):
+            dist = []
+
+            # Compute the ground truth bbox
+            bboxGT = gt_list[i]
+            bboxGT = [item[3:7] for item in gt if (item[0] == Nframe and item[1] == bboxGT)]
+            bboxGT = list(bboxGT[0])
+
+            # compute centroid GT
+            centerGT = centroid(bboxGT)
+            for j in range(len(pred_list)):
+                # compute the predicted bbox
+                bboxPR = pred_list[j]
+                aux_id = id_per_frame[bboxPR].index(Nframe)
+                bboxPR = boudningBoxes_per_frame[bboxPR][aux_id]
+
+                # compute centroid PR
+                centerPR = centroid(bboxPR)
+                d = np.linalg.norm(np.array(centerGT) - np.array(centerPR))
+                dist.append(d)
+            distances.append(dist)
+
+        # Update the accumulator
+        acc.update(gt_list, pred_list, distances)
+
+    # Compute and show the final metric results
+    mh = mm.metrics.create()
+    summary = mh.compute(acc, metrics=mm.metrics.motchallenge_metrics, name='acc:')
+    print(summary)
+    summary.to_csv("summary.csv")
 
 
 overlapTracking(frame_bboxes, video_path="../AICity_data/train/S03/c010/01_vdo.avi")

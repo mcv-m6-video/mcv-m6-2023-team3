@@ -2,6 +2,7 @@ import numpy as np
 import xmltodict
 import cv2
 
+
 def parse_annotations(path, isGT=False, startFrame=0):
     # Open the file
     with open(path) as file:
@@ -68,7 +69,8 @@ def parse_annotations(path, isGT=False, startFrame=0):
                 else:
                     groundTruthComplete.append({"frame": sortedFrames[i - 1], "bbox": np.array(bbox)})
 
-    return groundTruthComplete
+    return groundTruthComplete, groundTruth
+
 
 def getPredictions(path, isGT=False):
     # Open file
@@ -146,6 +148,7 @@ def getPredictions(path, isGT=False):
     # Return
     return detectedInfo
 
+
 class VideoData:
     def __init__(self, video_path, color="gray"):
         self.video_data = cv2.VideoCapture(video_path)
@@ -165,26 +168,27 @@ class VideoData:
         return self.num_frames
 
     def conver_slice_to_grayscale(self, start_frame, last_frame):
-        #frames = np.zeros((self.width, self.height, self.num_frames))
+        # frames = np.zeros((self.width, self.height, self.num_frames))
         frames = []
         for i in range(start_frame, last_frame, 1):
             self.video_data.set(cv2.CAP_PROP_POS_FRAMES, i)
             image = self.video_data.read()[1]
             image = cv2.cvtColor(image, self.color_transform)
-            #print(np.shape(image))
+            # print(np.shape(image))
             image = image.reshape(image.shape[0], image.shape[1], self.channels)
             frames.append(image)
         frames = np.array(frames)
         print(np.shape(frames))
         return frames
-    
+
     def convert_frame_by_idx(self, frame_idx):
         self.video_data.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         image = self.video_data.read()[1]
         image = cv2.cvtColor(image, self.color_transform)
-        #print(np.shape(image))
+        # print(np.shape(image))
         frame = image.reshape(image.shape[0], image.shape[1], self.channels)
         return frame
+
 
 def read_frame_boxes(frame_box):
     frame_boxes = []
@@ -194,7 +198,6 @@ def read_frame_boxes(frame_box):
         y1 = box[0][1]
         x2 = box[0][2] + x1
         y2 = box[0][3] + y1
-        dets = np.array([x1,y1,x2,y2,box[1]])
+        dets = np.array([x1, y1, x2, y2, box[1]])
         frame_boxes.append(dets)
     return np.array(frame_boxes)
-
