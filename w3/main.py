@@ -3,6 +3,7 @@ import os
 import sys
 from compute_metric import *
 from kalman import task2_2
+from overlap_tracking import task2_1
 from read_data import *
 import matplotlib.pyplot as plt
 import imageio
@@ -28,7 +29,7 @@ def main(argv):
     elif task == 1.4:
         task1_4()
     elif task == 2.1:
-        task2_1()
+        task2_1(path="", video_path="../AICity_data/train/S03/c010/01_vdo.avi")
     elif task == 2.2:
         task2_2()
 

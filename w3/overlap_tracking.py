@@ -1,30 +1,14 @@
 # Import required packages
 import pickle
-
 import motmetrics as mm
 from tqdm import trange
 
 from compute_metric import *
 from read_data import *
 
+
 # Help from https://github.com/mcv-m6-video/mcv-m6-2021-team7/blob/main/week3
 # Get the bboxes
-frame_bboxes = []
-with (open("boxesScores.pkl", "rb")) as openfile:
-    while True:
-        try:
-            frame_bboxes.append(pickle.load(openfile))
-        except EOFError:
-            break
-
-# Correct the data to the desired format
-aux_frame_boxes = []
-for frame_b in frame_bboxes:
-    auxiliar = zip(*frame_b)
-    aux_frame_boxes.append(list(auxiliar))
-frame_bboxes = aux_frame_boxes
-
-
 def centroid(box):  # box [x,y,w,h]
     x2 = box[0] + box[2]
     y2 = box[1] + box[3]
@@ -34,7 +18,22 @@ def centroid(box):  # box [x,y,w,h]
 
 
 # Function to perform overlap tracking
-def overlapTracking(frameBoundingBoxes, video_path):
+def task2_1(path, video_path):
+    frame_bboxes = []
+    with (open(path, "rb")) as openfile:
+        while True:
+            try:
+                frame_bboxes.append(pickle.load(openfile))
+            except EOFError:
+                break
+
+    # Correct the data to the desired format
+    aux_frame_boxes = []
+    for frame_b in frame_bboxes:
+        auxiliar = zip(*frame_b)
+        aux_frame_boxes.append(list(auxiliar))
+    frameBoundingBoxes = aux_frame_boxes
+
     # Define list to contain boxes per frame, id per frame and grab current frame
     boudningBoxes_per_frame = []
     id_per_frame = []
@@ -139,5 +138,3 @@ def overlapTracking(frameBoundingBoxes, video_path):
     print(summary)
     summary.to_csv("summary.csv")
 
-
-overlapTracking(frame_bboxes, video_path="../AICity_data/train/S03/c010/01_vdo.avi")
