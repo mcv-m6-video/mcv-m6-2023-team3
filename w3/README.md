@@ -7,7 +7,7 @@ During the third week of our project, we focused on object detection and object 
 
 * **Task 1**: Object detection
   * **Task 1.1**: Off-the-shelf
-  * **Task 1.2**: Annotation (not executable)
+  * **Task 1.2**: Annotation (not executable using the main)
   * **Task 1.3**: Fine-tune to your data
   * **Task 1.4**: K-Fold Cross-validation
 * **Task 2**: Object tracking
