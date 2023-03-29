@@ -36,7 +36,7 @@ def centroid(box): # box [x,y,w,h]
     return x_center, y_center
 
 
-def main():
+def task2_2():
 
     print("Load video")
     # Load the boxes from fasterRCNN
@@ -45,7 +45,7 @@ def main():
     kalman_box_id = []
     
     frame_bboxes = load_frame_boxes("w3/boxesScores1.pkl")
-    gt_info = parse_annotations(path=ANOTATIONS_PATH, isGT=True)
+    gt_info,_ = parse_annotations(path=ANOTATIONS_PATH, isGT=True)
     tracker = Sort()
     acc = mm.MOTAccumulator(auto_id=True)
 
@@ -110,4 +110,4 @@ def main():
         video_writer.release()
         cv2.destroyAllWindows()
 
-main()
+task2_2()
