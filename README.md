@@ -116,9 +116,13 @@ Arguments:
 
 - [Week 2: Background Estimation](https://github.com/mcv-m6-video/mcv-m6-2023-team3/tree/main/w2)
 
-- Week 3: Oject Detection and Tracking (Link not available yet)
+- Week 3: Oject Detection and Tracking
+  - [Task 1](https://docs.google.com/presentation/d/1bTaPiW5-V4t5nyi4mDJ3oiAD_aPqXAO3lbOn-PdhqBw/edit#slide=id.p)
+  - [Task 2](https://docs.google.com/presentation/d/1ngd5-QJU9hfPdhAYoc7J65LNQE-ML_aHy2f1aXI3ybo/edit#slide=id.p)
 
-- Week 4: Optical Flow: Stabilization and Tracking (Link not available yet)
+- Week 4: Optical Flow: Stabilization and Tracking
+  - [Task 1](https://docs.google.com/presentation/d/1FTtwSulFm87SZkPYsDEbVqKK0ixPBFlQ0KzYLtEYOio/edit#slide=id.p) 
+  - [Task 2/3](https://docs.google.com/presentation/d/1i7jyIbeC1bf1TXjsiLCqS8t2q83O2DqegVrfY0NBrIU/edit#slide=id.p)
 
 - Week 5: Multi-Target Multi-Camera Tracking (Link not available yet)
 <p align="right">(<a href="#top">back to top</a>)</p>
