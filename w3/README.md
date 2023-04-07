@@ -35,7 +35,10 @@ Arguments:
 
 ## Slides
 
-The slides for w3 are available [here](https://docs.google.com/presentation/d/1bTaPiW5-V4t5nyi4mDJ3oiAD_aPqXAO3lbOn-PdhqBw/edit).
+Slides for [task 1](https://docs.google.com/presentation/d/1bTaPiW5-V4t5nyi4mDJ3oiAD_aPqXAO3lbOn-PdhqBw/edit#slide=id.p).
+
+Slides for [task 2](https://docs.google.com/presentation/d/1ngd5-QJU9hfPdhAYoc7J65LNQE-ML_aHy2f1aXI3ybo/edit#slide=id.p).
+
 
 ## Requirements
 
