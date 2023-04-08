@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def calculate_msen(gt_flow, pred_flow):
+def calculate_msen(gt_flow, pred_flow, th):
     """
     Function to compute  the Mean Square Error in Non-occluded areas
     gt_flow: the ground thruth optical flow
@@ -16,7 +16,7 @@ def calculate_msen(gt_flow, pred_flow):
 
     sqrt_error = np.sqrt(error_u ** 2 + error_v ** 2)
     sqrt_error_masked = sqrt_error[mask]
-    msen = np.mean(sqrt_error_masked)
+    msen = np.mean(sqrt_error_masked[sqrt_error_masked > th])
 
     return msen
 

@@ -1,16 +1,18 @@
 import os
 import time
+import sys
+
+sys.path.append("../")
 
 import cv2
 import numpy as np
-# from opticalflow import compute_pyflow, compute_lukas_kanade, compute_epicflow
+from opticalflow import compute_pyflow, compute_lukas_kanade, compute_epicflow
 from OpticalFlowToolkit.lib import flowlib
+
 from compute_metric import calculate_msen, calculate_pepn
 from block_matching import compute_block_matching
 
 ERROR_THRESH = 3
-
-from plots import PlotCreator
 
 
 def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
@@ -18,9 +20,9 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
     # distance = 'cv2.TM_CCORR_NORMED'
 
     # Read gt file
-    im1 = cv2.imread('/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/data_w1/img/000045_10.png', 0)
-    im2 = cv2.imread('/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/data_w1/img/000045_11.png', 0)
-    flow_gt = flowlib.read_flow("/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/data_w1/flow_noc/000045_10.png")
+    im1 = cv2.imread('./data_w1/img/000045_10.png', 0)
+    im2 = cv2.imread('./data_w1/img/000045_11.png', 0)
+    flow_gt = flowlib.read_flow("./data_w1/flow_noc/000045_10.png")
     if gridSearch:
         # motion = ['forward','backward']# uncomment when not using the 3d plot
         motion = ['backward']
@@ -53,7 +55,8 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
                     #     plotOf.plotArrowsOP(predicted_flow, 10, im2)
                     # else:
                     #      plotOf.plotArrowsOP(predicted_flow, 10, im1)
-                    msen, pepn = calculate_pepn(predicted_flow, flow_gt, th=ERROR_THRESH)
+                    msen = calculate_msen(predicted_flow, flow_gt, th=ERROR_THRESH)
+                    pepn = calculate_pepn(predicted_flow, flow_gt, th=ERROR_THRESH)
                     pepns.append(pepn)
                     msens.append(msen)
                     all_msen[i, j] = msen
@@ -78,23 +81,16 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
         print('Best Q', bestQ)
         print('Best pepn', bestPepn)
         print('Best msen', bestMsen)
-        searchAreas = np.array(searchAreas)
-        blockSize = np.array(blockSize)
-        X, Y = np.meshgrid(searchAreas, blockSize)
-        graph = PlotCreator()
-        graph.metric_3d_plot(X, Y, all_msen, 'Search area', 'Block size', 'MSEN')
-        graph.metric_3d_plot(X, Y, all_pepn, 'Search area', 'Block size', 'PEPN')
+
 
     else:
         compTime = [end_time[t] - start_time[t] for t in range(len(start_time))]
         print(compTime)
 
-    # Auxiliar 2D plots (UNCOMMENT)
-    plotter = PlotCreator()
-    plotter.plot_pepn_msen(pepns, msens, 'Search area', searchAreas)
 
 
-"""def task1_2(method="pyflow"):
+
+def task1_2(method="pyflow"):
 
     img_prev = cv2.imread('../data_w1/img/000045_10.png', cv2.IMREAD_GRAYSCALE)
     img = cv2.imread('../data_w1/img/000045_11.png', cv2.IMREAD_GRAYSCALE)
@@ -112,6 +108,19 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
     msen = calculate_msen(gt_flow, pred_flow)
     print("The msen for the img: " + str(img) + " is: " + str(msen))
     pepn = calculate_pepn(gt_flow, pred_flow, ERROR_THRESH)
-    print("The pepn for the img: " + str(img) + " is: " + str(pepn))"""
+    print("The pepn for the img: " + str(img) + " is: " + str(pepn))
 
-task11()
+
+def main(argv):
+    if len(argv) > 1:
+        task = float(argv[1])
+    else:
+        task = 1.1
+
+    if task == 1.1:
+        task11()
+    elif task == 1.2:
+        task1_2()
+
+if __name__ == "__main__":
+    main(sys.argv)
