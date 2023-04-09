@@ -5,8 +5,10 @@ from PIL import Image
 import numpy as np
 import cv2
 
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-#matplotlib.use('TkAgg')
+matplotlib.use('TkAgg')
 
 
 def plot_ap_miou(study_noise_pos, title="AP vs MIOU", xlabel = ""):
@@ -99,4 +101,28 @@ def magnitudeOP(img, flow_img):
     plt.title('Magnitude OF')
     plt.xticks([])
     plt.yticks([])
+    plt.show()
+
+
+
+def plot_3D(blockSize, searchAreas, msen, xlabel, ylabel, zlabel):
+    blockSize = np.array(blockSize)
+    searchAreas = np.array(searchAreas)
+    searchAreas, blockSize = np.meshgrid(searchAreas, blockSize)
+
+    msen = np.array(msen)
+    # create a 3D figure
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # create a surface plot with blockSize and searchAreas as x and y, and msen as z
+    surf = ax.plot_surface(blockSize, searchAreas, msen, cmap='hot')
+
+    # set the labels for the axes and colorbar
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_zlabel(zlabel)
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+
+    # show the plot
     plt.show()

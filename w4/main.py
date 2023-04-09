@@ -14,6 +14,7 @@ from block_matching import compute_block_matching
 
 ERROR_THRESH = 3
 
+from plot_data import plot_3D
 
 def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
     # distance = 'cv2.TM_SQDIFF_NORMED'
@@ -36,11 +37,13 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
 
     all_msen = np.zeros((len(blockSize), len(searchAreas)))
     all_pepn = np.zeros((len(blockSize), len(searchAreas)))
+    all_time = np.zeros((len(blockSize), len(searchAreas)))
     minerr = 10000
     start_time = []
     end_time = []
     pepns = []
     msens = []
+
     for m in motion:
         for i, bs in enumerate(blockSize):
             # quantStep = [int(bs/2),bs]
@@ -48,6 +51,7 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
             for q in quantStep:
                 start_time.append(time.time())
                 for j, sa in enumerate(searchAreas):
+                    start = time.time()
                     predicted_flow = compute_block_matching(im1, im2, m, sa, bs, distance, q)
                     # plotOf = PlotOF()
                     # utils.plot_module(predicted_flow)
@@ -59,23 +63,32 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
                     pepn = calculate_pepn(predicted_flow, flow_gt, th=ERROR_THRESH)
                     pepns.append(pepn)
                     msens.append(msen)
+
                     all_msen[i, j] = msen
                     all_pepn[i, j] = pepn
                     print('Motion: ', m)
                     print('BS: ', bs)
                     print('SA: ', sa)
+                    print('Q: ', q)
                     print('msen: ', msen)
                     print('pepn: ', pepn)
                     errsum = msen + pepn
                     if errsum < minerr:
                         bestQ = q
                         minerr = errsum
+                        bestMotion = m
                         bestArea = sa
                         bestBlock = bs
                         bestMsen = msen
                         bestPepn = pepn
+                    end = time.time()
+                    all_time[i,j] = end - start
                 end_time.append(time.time())
+    #plot_3D(blockSize, searchAreas, all_msen, 'Block Size', 'Search Areas', 'MSEN')
+    #plot_3D(blockSize, searchAreas, all_pepn, 'Block Size', 'Search Areas', 'PEPN')
+    #plot_3D(blockSize, searchAreas, all_time, 'Block Size', 'Search Areas', 'Execution time')
     if gridSearch:
+        print('Best M', bestMotion)
         print('Best BS', bestBlock)
         print('Best AS', bestArea)
         print('Best Q', bestQ)
