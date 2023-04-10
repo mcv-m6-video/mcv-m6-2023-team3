@@ -6,7 +6,8 @@ sys.path.append("../")
 
 import cv2
 import numpy as np
-from opticalflow import compute_pyflow, compute_lukas_kanade, compute_epicflow
+from epicflow import compute_epicflow
+from opticalflow import compute_pyflow, compute_lukas_kanade
 from OpticalFlowToolkit.lib import flowlib
 
 from compute_metric import calculate_msen, calculate_pepn
@@ -109,16 +110,32 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
 
 def task1_2(method="pyflow"):
 
-    img_prev = cv2.imread('../data_w1/img/000045_10.png', cv2.IMREAD_GRAYSCALE)
-    img = cv2.imread('../data_w1/img/000045_11.png', cv2.IMREAD_GRAYSCALE)
+    def read_img(color="gray"):
+        if color == "gray":
+            img_prev = cv2.imread('../data_w1/img/000045_10.png', cv2.IMREAD_GRAYSCALE)
+            img = cv2.imread('../data_w1/img/000045_11.png', cv2.IMREAD_GRAYSCALE)
+        elif color == "rgb":
+            img_prev = cv2.imread('../data_w1/img_color/000045_10.png')
+            img_prev = cv2.cvtColor(img_prev, cv2.COLOR_BGR2RGB)
+            img = cv2.imread('../data_w1/img_color/000045_11.png')
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        else:
+            raise NotImplementedError
+        
+        return img, img_prev
+
+
     gt_flow = flowlib.read_flow('../data_w1/flow_noc/000045_10.png')
 
     if method == 'pyflow':
+        img, img_prev = read_img(color="gray")
         pred_flow = compute_pyflow(img, img_prev)
 
     elif method == 'kanade':
+        img, img_prev = read_img(color="gray")
         pred_flow = compute_lukas_kanade(img, img_prev)
     elif method == 'epic':
+        img, img_prev = read_img(color="rgb")
         pred_flow = compute_epicflow(img, img_prev)
 
 
@@ -132,7 +149,7 @@ def main(argv):
     if len(argv) > 1:
         task = float(argv[1])
     else:
-        task = 1.1
+        task = 1.2
 
     if task == 1.1:
         task11()
