@@ -7,6 +7,7 @@ import cv2
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import flow_vis
 
 matplotlib.use('TkAgg')
 
@@ -125,4 +126,13 @@ def plot_3D(blockSize, searchAreas, msen, xlabel, ylabel, zlabel):
     fig.colorbar(surf, shrink=0.5, aspect=5)
 
     # show the plot
+    plt.show()
+
+def magnitudeOP(img, flow_img):
+    flow_color = flow_vis.flow_to_color(flow_img[:, :, :2], convert_to_bgr=False)
+    plt.imshow(flow_color)
+    plt.imshow(img, alpha=0.2, cmap='gray')
+    plt.title('Magnitude OF')
+    plt.xticks([])
+    plt.yticks([])
     plt.show()

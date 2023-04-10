@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def calculate_msen(gt_flow, pred_flow):
     """
@@ -37,5 +37,17 @@ def calculate_pepn(gt_flow, pred_flow, th):
 
     sqrt_error = np.sqrt(error_u ** 2 + error_v ** 2)
     sqrt_error_masked = sqrt_error[mask]
+    
+    #error_plt = np.zeros(gt_flow.shape)
+    #error_plt[mask,0] = sqrt_error[mask]
+    #error_plt[error_plt < th] = 0
+    #plt.imshow(error_plt)
+    #plt.show()
+
+    #plt.hist(sqrt_error_masked, bins=10, density=True)
+    #plt.xlabel('Error')
+    #plt.ylabel('Percentage')
+    #plt.title('PEPN Histogram')
+    #plt.show()
 
     return np.sum(sqrt_error_masked > th) / len(sqrt_error_masked)

@@ -6,8 +6,8 @@ sys.path.append("../")
 
 import cv2
 import numpy as np
-from epicflow import compute_epicflow
-from opticalflow import compute_pyflow, compute_lukas_kanade
+#from epicflow import compute_epicflow
+#from opticalflow import compute_pyflow, compute_lukas_kanade
 from OpticalFlowToolkit.lib import flowlib
 
 from compute_metric import calculate_msen, calculate_pepn
@@ -15,7 +15,8 @@ from block_matching import compute_block_matching
 
 ERROR_THRESH = 3
 
-from plot_data import plot_3D, plot_optical_flow
+from plot_data import plot_3D, plot_optical_flow, magnitudeOP
+
 
 def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
     # distance = 'cv2.TM_SQDIFF_NORMED'
@@ -28,8 +29,8 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
     if gridSearch:
         # motion = ['forward','backward']# uncomment when not using the 3d plot
         motion = ['backward']
-        blockSize = [4]
-        searchAreas = np.array(blockSize) * 2 + np.array(blockSize)
+        blockSize = [32]
+        searchAreas = [96]
 
     else:
         motion = ['backward']
@@ -44,7 +45,7 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
     end_time = []
     pepns = []
     msens = []
-    plot_metrics = True
+    plot_metrics = False
     best_predicted_flow = None
     for m in motion:
         for i, bs in enumerate(blockSize):
@@ -61,7 +62,7 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
                     #     plotOf.plotArrowsOP(predicted_flow, 10, im2)
                     # else:
                     #      plotOf.plotArrowsOP(predicted_flow, 10, im1)
-                    msen = calculate_msen(flow_gt, predicted_flow, th=ERROR_THRESH)
+                    msen = calculate_msen(flow_gt, predicted_flow)
                     pepn = calculate_pepn(flow_gt, predicted_flow, th=ERROR_THRESH)
                     pepns.append(pepn)
                     msens.append(msen)
@@ -89,6 +90,7 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
                 end_time.append(time.time())
     if plot_metrics:
         plot_optical_flow(im2, best_predicted_flow)
+        magnitudeOP(im2, best_predicted_flow)
         plot_3D(blockSize, searchAreas, all_msen, 'Block Size', 'Search Areas', 'MSEN')
         plot_3D(blockSize, searchAreas, all_pepn, 'Block Size', 'Search Areas', 'PEPN')
         plot_3D(blockSize, searchAreas, all_time, 'Block Size', 'Search Areas', 'Execution time')
@@ -104,6 +106,9 @@ def task11(gridSearch=True, distance='cv2.TM_CCORR_NORMED'):
     else:
         compTime = [end_time[t] - start_time[t] for t in range(len(start_time))]
         print(compTime)
+
+
+
 
 
 
@@ -149,7 +154,7 @@ def main(argv):
     if len(argv) > 1:
         task = float(argv[1])
     else:
-        task = 1.2
+        task = 1.1
 
     if task == 1.1:
         task11()
