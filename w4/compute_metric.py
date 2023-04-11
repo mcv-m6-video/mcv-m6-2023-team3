@@ -51,3 +51,30 @@ def calculate_pepn(gt_flow, pred_flow, th):
     #plt.show()
 
     return np.sum(sqrt_error_masked > th) / len(sqrt_error_masked)
+
+def frameIOU(boxA, boxB):
+    # For each prediction, compute its iou over all the boxes in that frame
+    xleft1, yleft1, xright1, yright1 = np.split(boxA, 4, axis=0)
+    xleft2, yleft2, xright2, yright2 = np.split(boxB, 4, axis=0)
+
+    # Calculate the intersection in the bboxes
+    xmin = np.maximum(xleft1, np.transpose(xleft2))
+    ymin = np.maximum(yleft1, np.transpose(yleft2))
+    xmax = np.minimum(xright1, np.transpose(xright2))
+    ymax = np.minimum(yright1, np.transpose(yright2))
+    w = np.maximum(xmax - xmin + 1.0, 0.0)
+    h = np.maximum(ymax - ymin + 1.0, 0.0)
+    intersection = w * h
+
+    # Calculate the Union in the bboxes
+    areaboxA = (xright1 - xleft1 + 1.0) * (yright1 - yleft1 + 1.0)
+    areaboxB = (xright2 - xleft2 + 1.0) * (yright2 - yleft2 + 1.0)
+    union = areaboxA + np.transpose(areaboxB) - intersection
+
+    # Calculate IOU
+    iou = intersection / union
+    maxScore = max(iou)
+    index = np.argmax(iou)
+
+    # Return the IOU, maxscore, index
+    return iou, maxScore, index
