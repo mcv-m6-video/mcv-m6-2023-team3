@@ -7,6 +7,7 @@ from tqdm import trange
 from block_matching import compute_block_matching
 from compute_metric import *
 from read_data import *
+from opticalflow import compute_pyflow, compute_lukas_kanade
 
 
 # Help from https://github.com/mcv-m6-video/mcv-m6-2021-team7/blob/main/week4
@@ -57,9 +58,8 @@ def task2_1(path="boxesScores.pkl", video_path= '/Users/advaitdixit/Documents/Ma
 
         # apply optical flow to improve the bounding box and get better iou with the following frame
         # predict flow with block matching
-        predicted_flow = compute_block_matching(previous_frame, current_frame, 'backward', searchArea=96,
-                                                blockSize=16, method="cv2.TM_CCORR_NORMED", q=16)
-
+        # predicted_flow = compute_block_matching(previous_frame, current_frame, 'backward', searchArea=192, blockSize=32, method="cv2.TM_CCORR_NORMED", q=16)
+        predicted_flow = compute_lukas_kanade(current_frame, previous_frame)
         # assign a new ID to each unassigned bbox
         for i in range(len(frame)):
             new_bbox = frame[i]
@@ -146,6 +146,7 @@ def task2_1(path="boxesScores.pkl", video_path= '/Users/advaitdixit/Documents/Ma
                             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (int(color[0]), int(color[1]), int(color[2])), 2)
         if showVid:
             cv2.imshow('Video', im)
+        cv2.imwrite('frame{}.png'.format(i), im)
         out.write(im)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
