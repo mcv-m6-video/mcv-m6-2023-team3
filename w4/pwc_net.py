@@ -9,7 +9,7 @@ from tfoptflow.tfoptflow.visualize import display_img_pairs_w_flows
 
 
 
-def compute_epicflow(img, img_prev):
+def compute_pwcnet(img, img_prev):
     # Following the guide of https://github.com/philferriere/tfoptflow/blob/master/tfoptflow/pwcnet_eval_lg-6-2-multisteps-chairsthingsmix_flyingchairs.ipynb
 
     # Build a list of image pairs to process

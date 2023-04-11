@@ -6,8 +6,8 @@ sys.path.append("../")
 
 import cv2
 import numpy as np
-#from epicflow import compute_epicflow
-#from opticalflow import compute_pyflow, compute_lukas_kanade
+from pwc_net import compute_pwcnet
+from opticalflow import compute_pyflow, compute_lukas_kanade
 from OpticalFlowToolkit.lib import flowlib
 
 from compute_metric import calculate_msen, calculate_pepn
@@ -139,9 +139,9 @@ def task1_2(method="pyflow"):
     elif method == 'kanade':
         img, img_prev = read_img(color="gray")
         pred_flow = compute_lukas_kanade(img, img_prev)
-    elif method == 'epic':
+    elif method == 'pwcnet':
         img, img_prev = read_img(color="rgb")
-        pred_flow = compute_epicflow(img, img_prev)
+        pred_flow = compute_pwcnet(img, img_prev)
 
 
     msen = calculate_msen(gt_flow, pred_flow)
