@@ -12,17 +12,18 @@ from matplotlib import pyplot as plt
 import motmetrics as mm
 
 
-from utils import Track, bb_intersection_over_union, refine_bbox
+from utils import Track, bb_intersection_over_union, refine_bbox, Detection
 from read_dataset import DataAnotations, group_by_frame
 from sklearn.metrics.pairwise import pairwise_distances
+from sort import Sort
 
 
-GENERATE_VIDEO = True
+GENERATE_VIDEO = False
 SAVE_SUMMARY = True
 SAVE_PATH = 'results/week5/task_1'
-THRESHOLD = 550
-SEQUENCE = 'S01'
-CAMERA = 'c001'
+THRESHOLD = 675
+SEQUENCE = 'S03'
+CAMERA = 'c010'
 DATA_SET_PATH = "aic19/train"
 DETECTORS = ['mask_rcnn', 'ssd512', 'yolo3']
 
@@ -91,10 +92,9 @@ def compute_distance(frame, y_gt, y_pred):
         dists = pairwise_distances(X, Y, metric='euclidean')
     except ValueError:
         dists = np.array([])
-
     return dists
 
-def do_tracking(detector, distance_threshold, sequence, camera, save_path):
+def do_tracking(detector, distance_threshold, sequence, camera, save_path, use_kalman=False):
 
     # Load the ground thruth
     reader = DataAnotations( DATA_SET_PATH + '/' + sequence + '/' + camera + '/gt/gt.txt')
@@ -115,11 +115,13 @@ def do_tracking(detector, distance_threshold, sequence, camera, save_path):
             os.path.join(save_path, 'task1_' + sequence + '_' + camera + '_' + detector + '.gif'), fps=25
         )
 
+    if use_kalman:
+        tracker = Sort()
     y_gt = []
     tracks = []
     addition_track_id = 0  # Counter to give id to those detections that become a track
     start = 0
-    end = int(n_frames * 0.1)
+    end = int(n_frames * 0.5)
 
     for frame in trange(start, end, desc='Tracking'):
 
@@ -128,18 +130,34 @@ def do_tracking(detector, distance_threshold, sequence, camera, save_path):
         for d in detections_on_frame_:
             detections_on_frame.append(d)
 
+        if use_kalman:
+                
+            bounding_boxes = []
+            for detection in detections_on_frame:
+                bbox = [*detection.bbox, 1]
+                bounding_boxes.append(bbox)
+    
+            # Update the tracker with the array of bounding boxes
+            detections_on_frame = tracker.update(np.array(bounding_boxes))            
+
+            detections = []
+            for detection in detections_on_frame:
+                detections.append(Detection(frame, int(detection[-1]), 'car',  *detection[:4]))
+    
+            # Update the detections_on_frame list with the list of Detection objects
+            detections_on_frame = detections
+
+
         tracks, addition_track_id = update_tracks_by_overlap(tracks, detections_on_frame ,addition_track_id)
 
         y_gt.append(gt.get(frame, []))
 
     idf1s = []
-    moving_cars = []
 
     acc = mm.MOTAccumulator(auto_id=True)
     y_pred = []
 
     moving_tracks = remove_static_tracks(tracks, distance_threshold)
-    moving_cars.extend(moving_tracks)
     detections = []
     for track in moving_tracks:
         detections.extend(track.detections)
@@ -147,7 +165,7 @@ def do_tracking(detector, distance_threshold, sequence, camera, save_path):
 
     for frame in trange(start, end, desc='Accumulating detections'):
 
-        if GENERATE_VIDEO:
+        if GENERATE_VIDEO and frame > end *0.75:
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
             ret, img = cap.read()
 
@@ -157,14 +175,14 @@ def do_tracking(detector, distance_threshold, sequence, camera, save_path):
         frame_detections = []
         for det in detections.get(frame, []):
             frame_detections.append(det)
-            if GENERATE_VIDEO:
+            if GENERATE_VIDEO and frame > end *0.75:
                 cv2.rectangle(img, (int(det.xtl), int(det.ytl)), (int(det.xbr), int(det.ybr)),  track.color, 6)
                 cv2.rectangle(img, (int(det.xtl), int(det.ytl)), (int(det.xbr), int(det.ytl) - 15),  track.color, -6)
                 cv2.putText(img, str(det.id), (int(det.xtl), int(det.ytl)), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 6)
 
         y_pred.append(frame_detections)
 
-        if GENERATE_VIDEO:
+        if GENERATE_VIDEO and frame > end *0.75 :
             writer.append_data(cv2.resize(img, (600, 350)))
 
         acc.update(
@@ -205,7 +223,3 @@ plt.xlabel('detectors')
 plt.ylabel('IDF1')
 if SAVE_PATH:
     plt.savefig(os.path.join(SAVE_PATH, 'task1_' + SEQUENCE + '_' + CAMERA + '_' + 'dist-th_vs_idf1.png'))
-
-
-
-
