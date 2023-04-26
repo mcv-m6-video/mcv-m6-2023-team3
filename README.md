@@ -124,7 +124,7 @@ Arguments:
   - [Task 1](https://docs.google.com/presentation/d/1FTtwSulFm87SZkPYsDEbVqKK0ixPBFlQ0KzYLtEYOio/edit#slide=id.p) 
   - [Task 2/3](https://docs.google.com/presentation/d/1i7jyIbeC1bf1TXjsiLCqS8t2q83O2DqegVrfY0NBrIU/edit#slide=id.p)
 
-- Week 5: Multi-Target Multi-Camera Tracking (Link not available yet)
+- [Week 5: Multi-Target Multi-Camera Tracking](https://docs.google.com/presentation/d/1COxV1K5cBSR6HK9wBdCDpgl8XroO2eR8A5PmY2dSccE/edit?usp=sharing)
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
