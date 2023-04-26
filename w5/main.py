@@ -3,21 +3,18 @@ import os
 import pickle
 import sys
 
-
-import numpy as np
 import cv2
 import imageio
-from tqdm import trange
 import motmetrics as mm
+import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
-from sort import Sort
+from tqdm import trange
 
-
-from utils import Track, bb_intersection_over_union, refine_bbox, \
-    Detection, format_pkl_train, reformat_predictions, centroid, \
-    crop_image, histogram_hue, format_pkl
 import train_features
 from read_dataset import DataAnotations, group_by_frame
+from sort import Sort
+from utils import Track, bb_intersection_over_union, refine_bbox, \
+    Detection, reformat_predictions, crop_image, histogram_hue, format_pkl, compute_score
 
 
 def compare_box_detection(last_detection, additional_detections):
@@ -49,7 +46,7 @@ def rm_parked_cars(tracks, threshold, min_len=5):
     addtional_track = []
     for track in tracks:
         if len(track.detections) > min_len:
-            centroits = np.array([[(d.xtl+d.xbr)/2, (d.ytl+d.ybr)/2] for d in track.detections])
+            centroits = np.array([[(d.xtl + d.xbr) / 2, (d.ytl + d.ybr) / 2] for d in track.detections])
             distance = pairwise_distances(centroits, centroits, metric='euclidean')
 
             if np.max(distance) > threshold:
@@ -68,7 +65,7 @@ def tracking_by_overlap(tracks, new_detections, addition_track_id):
     for track in tracks:
         if track.terminated:
             continue
-        
+
         following_box = compare_box_detection(track.detections[-1], new_detections)
         if following_box:
             refined_detection = refine_bbox(track.detections[-2:], following_box)
@@ -96,7 +93,9 @@ def compute_distance(frame, y_gt, y_pred):
         dists = np.array([])
     return dists
 
-def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, save_path, use_kalman=False, generate_video=False, save_summary=False):
+
+def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, save_path, use_kalman=False,
+                generate_video=False, save_summary=False):
     """
         Main function to perform the detection based on tracking by overlap and that can be optionally be based on kalman filter tacker too
         detector(str): The name of the detector use to perform the object detection ['mask_rcnn', 'ssd512', 'yolo3']
@@ -108,7 +107,7 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
     """
 
     # Load the ground thruth
-    reader = DataAnotations( dataset_path + '/' + sequence + '/' + camera + '/gt/gt.txt')
+    reader = DataAnotations(dataset_path + '/' + sequence + '/' + camera + '/gt/gt.txt')
     gt = reader.get_annotations(classes=['car'])
 
     # Load the boxes gathered from the detector
@@ -118,7 +117,6 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
     # Load the video test to perform the inference
     cap = cv2.VideoCapture(dataset_path + '/' + sequence + '/' + camera + '/vdo.avi')
     n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
 
     os.makedirs(save_path, exist_ok=True)
     if generate_video:
@@ -142,23 +140,23 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
 
         # Use kalman to do the tracking
         if use_kalman:
-                
+
             bounding_boxes = []
             for detection in detections_on_frame:
                 bbox = [*detection.bbox, 1]
                 bounding_boxes.append(bbox)
-    
+
             # Update the tracker with the array of bounding boxes
-            detections_on_frame = tracker.update(np.array(bounding_boxes))            
+            detections_on_frame = tracker.update(np.array(bounding_boxes))
 
             detections = []
             for detection in detections_on_frame:
-                detections.append(Detection(frame, int(detection[-1]), 'car',  *detection[:4]))
-    
+                detections.append(Detection(frame, int(detection[-1]), 'car', *detection[:4]))
+
             detections_on_frame = detections
 
         # Do the tracking based on overlap
-        tracks, addition_track_id = tracking_by_overlap(tracks, detections_on_frame ,addition_track_id)
+        tracks, addition_track_id = tracking_by_overlap(tracks, detections_on_frame, addition_track_id)
 
         y_gt.append(gt.get(frame, []))
 
@@ -177,7 +175,7 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
     for frame in trange(start, end):
 
         # Generate a small gift for the slides
-        if generate_video and frame > end *0.75:
+        if generate_video and frame > end * 0.75:
             cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
             ret, img = cap.read()
 
@@ -187,14 +185,14 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
         frame_detections = []
         for det in detections.get(frame, []):
             frame_detections.append(det)
-            if generate_video and frame > end *0.75:
-                cv2.rectangle(img, (int(det.xtl), int(det.ytl)), (int(det.xbr), int(det.ybr)),  track.color, 6)
-                cv2.rectangle(img, (int(det.xtl), int(det.ytl)), (int(det.xbr), int(det.ytl) - 15),  track.color, -6)
+            if generate_video and frame > end * 0.75:
+                cv2.rectangle(img, (int(det.xtl), int(det.ytl)), (int(det.xbr), int(det.ybr)), track.color, 6)
+                cv2.rectangle(img, (int(det.xtl), int(det.ytl)), (int(det.xbr), int(det.ytl) - 15), track.color, -6)
                 cv2.putText(img, str(det.id), (int(det.xtl), int(det.ytl)), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 0), 6)
 
         y_pred.append(frame_detections)
 
-        if generate_video and frame > end *0.75 :
+        if generate_video and frame > end * 0.75:
             writer.append_data(cv2.resize(img, (600, 350)))
 
         acc.update(
@@ -204,7 +202,7 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
         )
         save_tracks_txt = True
         if save_tracks_txt:
-            filename = os.path.join(save_path, sequence + '_' + camera + "_"+ detector+"_"+"kalman"+'.txt')
+            filename = os.path.join(save_path, sequence + '_' + camera + "_" + detector + "_" + "kalman" + '.txt')
 
             lines = []
             for track in moving_tracks:
@@ -216,7 +214,6 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
             with open(filename, "w") as file:
                 for line in lines:
                     file.write(",".join(list(map(str, line))) + "\n")
-
 
     mh = mm.metrics.create()
     summary = mh.compute(acc, metrics=['idf1', 'idp'], name='acc')
@@ -235,88 +232,31 @@ def do_tracking(detector, dataset_path, distance_threshold, sequence, camera, sa
 
     return idf1s
 
-# This function computes the score for the given detections
-def compute_score(det_info):
+
+def task1():
     """
-        Initialize the MOT accumulator with automatic ID assignment
-        det_info(): Detections
+        Task1 one about Multi-target single-camera (MTSC) tracking by overlap and Kalman.
+        There are thre possible backbones ['mask_rcnn', 'ssd512', 'yolo3']
+        This system is based on the AI City 19 dataset.
     """
-    acc = mm.MOTAccumulator(auto_id=True)
 
-    # Define the ground truth files for each camera
-    path_gttxts = ['aic19-track1-mtmc-train/train/S03/c010/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S03/c011/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S03/c012/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S03/c013/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S03/c014/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S03/c015/gt/gt.txt']
-
-    # Define the track names for each camera
-    track_names = ['c010', 'c011', 'c012', 'c013', 'c014', 'c015']
-
-    # Loop over each camera
-    for cam_index in range(len(path_gttxts)):
-        # Import the ground truth data for the current camera
-        gt_info = train_features.import_gt_track(path_gttxts[cam_index])
-        formatted_gt = format_pkl_train([gt_info], [track_names[cam_index]])
-        cams_List, trackId_List, frames_List, boxes_List = reformat_predictions(formatted_gt)
-
-        # Correct the ground truth data for the current camera
-        camera_index = np.where(np.array(cams_List) == track_names[cam_index])
-        camera_index = camera_index[0]
-        new_frames = [frames_List[id] for id in camera_index]
-        new_boxes = [boxes_List[id] for id in camera_index]
-        new_tracksId = [trackId_List[id] for id in camera_index]
-
-        # Correct the detection data for the current camera
-        cam_idx_det = np.where(np.array(det_info[0]) == track_names[cam_index])
-        cam_idx_det = cam_idx_det[0]
-        new_frames_det = [det_info[2][id] for id in cam_idx_det]
-        new_boxes_det = [det_info[3][id] for id in cam_idx_det]
-        new_tracksId_det = [det_info[1][id] for id in cam_idx_det]
-
-        # Loop over all frames in the current camera
-        for frameID in trange(len(new_frames), desc="Score"):
-            Nframe = new_frames[frameID]
-
-            # Get the IDs of the tracks from the ground truth at this frame
-            gt_list = [j for j, k in enumerate(new_frames) if k == Nframe]
-            GTlist = [new_tracksId[i] for i in gt_list]
-            GTbbox = [new_boxes[i] for i in gt_list]
-
-            # Get the IDs of the detected tracks at this frame
-            det_list = [j for j, k in enumerate(new_frames_det) if k == Nframe]
-            DETlist = [new_tracksId_det[i] for i in det_list]
-            detectedBoundingBox = [new_boxes_det[i] for i in det_list]
-
-            # Compute the distance between each ground truth track and each detected track
-            distances = []
-            for i in range(len(GTlist)):
-                dist = []
-                # Compute the ground truth bounding box
-                bboxGT = GTbbox[i]
-
-                # Compute centroid GT
-                centerGT = centroid(bboxGT)
-                for j in range(len(DETlist)):
-                    # Compute the predicted bbox
-                    predictedBoundingBox = detectedBoundingBox[j]
-
-                    # Compute centroid PR
-                    centerPR = centroid(predictedBoundingBox)
-
-                    # Compute euclidean distance
-                    d = np.linalg.norm(np.array(centerGT) - np.array(centerPR))
-                    dist.append(d)
-                distances.append(dist)
-
-            # Update the accumulator
-            acc.update(GTlist, DETlist, distances)
-
-    # Compute and show the final metric results
-    mh = mm.metrics.create()
-    summary = mh.compute(acc, metrics=['idf1', 'idp', 'idr', 'precision', 'recall'], name='ACC:')
-    print(summary)
+    GENERATE_VIDEO = False
+    SAVE_SUMMARY = True
+    SAVE_PATH = 'results/week5/task_1'
+    THRESHOLD = 675
+    SEQUENCE = 'S03'
+    CAMERA = 'c010'
+    DATA_SET_PATH = "aic19/train"
+    DETECTORS = ['mask_rcnn', 'ssd512', 'yolo3']
+    USE_KALMAN = False
+    all_idf1s = []
+    # For all the three detector compute the idf1s
+    for detector in DETECTORS:
+        print("Detector:" + detector)
+        idf1s = do_tracking(detector, DATA_SET_PATH, THRESHOLD, SEQUENCE, CAMERA, SAVE_PATH, USE_KALMAN, GENERATE_VIDEO,
+                            SAVE_SUMMARY)
+        all_idf1s.append(idf1s)
+    print(all_idf1s)
 
 
 def task2():
@@ -325,54 +265,29 @@ def task2():
         This system is based on the AI City 19 dataset.
     """
     # Set paths to the training data for ground truth
-    gt_train_paths = ['aic19-track1-mtmc-train/train/S01', 'aic19-track1-mtmc-train/train/S04']
+    gt_train_paths = ['aic19-track1-mtmc-train/train/S03', 'aic19-track1-mtmc-train/train/S04']
 
     # Set the base path for the videos
-    base = 'aic19-track1-mtmc-train/train/S03'
-
-    # Set the path for each video for each camera
-    video_path = {
-        'c010': "{}/c010/vdo.avi".format(base),
-        'c011': "{}/c011/vdo.avi".format(base),
-        'c012': "{}/c012/vdo.avi".format(base),
-        'c013': "{}/c013/vdo.avi".format(base),
-        'c014': "{}/c014/vdo.avi".format(base),
-        'c015': "{}/c015/vdo.avi".format(base),
-    }
-    # Set the frame size for each camera
-    frame_size = {
-        'c010': [1920, 1080],
-        'c011': [2560, 1920],
-        'c012': [2560, 1920],
-        'c013': [2560, 1920],
-        'c014': [1920, 1080],
-        'c015': [1920, 1080]
-    }
+    base = 'aic19-track1-mtmc-train/train/S01'
 
     # Set the list of camera names
-    camerasList = ['c010', 'c011', 'c012', 'c013', 'c014', 'c015']
-
-    # Set the list of pickle names
-    pickle_names = ['c10', 'c11', 'c12', 'c13', 'c14', 'c15']
-
-    # Set the flags
-    video = False
-    showVid = False
+    camerasList = ['c001', 'c002', 'c003', 'c004', 'c005']
 
     # Create an empty list to store detections
-    dets = []
+    detections = []
+
     # Loop through each camera in the list
     for pickle_name in camerasList:
         # Set the path to the detection pickle file for this camera
-        file = "detectionsS03_" + pickle_name + "_ssd512.pkl"
+        file = "detectionsS01_" + pickle_name + "_ssd512.pkl"
         print(file)
         # Open the pickle file and load the detections
         with open(file, 'rb') as f:
-            dets.append(pickle.load(f))
+            detections.append(pickle.load(f))
             f.close()
 
     # Format the detections into a standard format
-    detections = format_pkl(all_pkl=dets, camerasL=camerasList, isGt=False)
+    detections = format_pkl(all_pkl=detections, camerasL=camerasList, isGt=False)
 
     """ Train """
     # Get ground truth information and video paths
@@ -419,12 +334,18 @@ def task2():
                 # Calculate the score between the two cropped images
                 scores = []
                 for n in range(len(cropped_bboxes_cam1)):
-                    ft_vecCam1 = histogram_hue(cropped_bboxes_cam1[n])
-                    ft_vecCam2 = histogram_hue(cropped_bboxes_cam2[n])
-                    if ft_vecCam2 is None or ft_vecCam1 is None:
+                    featuresCamera1 = histogram_hue(cropped_bboxes_cam1[n])
+                    featuresCamera2 = histogram_hue(cropped_bboxes_cam2[n])
+
+                    # Check if features are none
+                    if featuresCamera2 is None or featuresCamera1 is None:
                         continue
-                    formPairs = [np.vstack((ft_vecCam1, ft_vecCam2))]
+
+                    # Stack features to form pairs
+                    formPairs = [np.vstack((featuresCamera1, featuresCamera2))]
                     formPairs = np.array(formPairs)
+
+                    # Calculate scores
                     score = nca.score_pairs(formPairs).mean()
                     scores.append(score)
 
@@ -440,84 +361,10 @@ def task2():
                     corrected_detections[idCam][cam1][i] = track1
                     corrected_detections[idCam + 1][cam2][j] = track2
 
-    cams_List, trackId_List, frames_List, boxes_List = reformat_predictions(corrected_detections)
-
-    if video:
-        # Generate colors for each track
-        id_colors = []
-        length = []
-        for cc in range(len(camerasList)):
-            length.append(len(corrected_detections[cc][camerasList[cc]]))
-        max_tracks = np.max(length)
-
-        for i in range(max_tracks):
-            color = list(np.random.choice(range(256), size=3))
-            id_colors.append(color)
-        for cam in camerasList:
-            # Define the codec and create VideoWriter object
-            vidCapture = cv2.VideoCapture(video_path[cam])
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter(cam + '_task2.mp4', fourcc, 10.0, (frame_size[cam][0], frame_size[cam][1]))
-
-            # filter the cam detections
-            cam_idx = np.where(np.array(cams_List) == cam)
-            cam_idx = cam_idx[0]
-            new_frames = [frames_List[id] for id in cam_idx]
-            new_boxes = [boxes_List[id] for id in cam_idx]
-            new_tracksId = [trackId_List[id] for id in cam_idx]
-
-            # for each frame draw rectangles to the detected bboxes
-            for i, fr in enumerate(np.unique(new_frames)):
-                idsFr = np.where(np.array(new_frames) == fr)
-                idsFr = idsFr[0]
-                vidCapture.set(cv2.CAP_PROP_POS_FRAMES, fr)
-                im = vidCapture.read()[1]
-
-                for j in range(len(idsFr)):
-                    track_id = new_tracksId[idsFr[j]]
-                    bbox = new_boxes[idsFr[j]]
-                    color = id_colors[track_id]
-                    cv2.rectangle(im, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
-                                  (int(color[0]), int(color[1]), int(color[2])), 2)
-                    cv2.putText(im, 'ID: ' + str(track_id), (int(bbox[0]), int(bbox[1]) - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (int(color[0]), int(color[1]), int(color[2])), 2)
-
-                if showVid:
-                    cv2.imshow('Video', im)
-                out.write(im)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-            vidCapture.release()
-            out.release()
-            cv2.destroyAllWindows()
-
     # Compute the score for multitracking
-    det_info = reformat_predictions(corrected_detections)
-    compute_score(det_info)
+    detection_info = reformat_predictions(corrected_detections)
+    compute_score(detection_info)
 
-def task1():
-    """
-        Task1 one about Multi-target single-camera (MTSC) tracking by overlap and Kalman. 
-        There are thre possible backbones ['mask_rcnn', 'ssd512', 'yolo3']
-        This system is based on the AI City 19 dataset.
-    """
-    
-    GENERATE_VIDEO = False
-    SAVE_SUMMARY = True
-    SAVE_PATH = 'results/week5/task_1'
-    THRESHOLD = 675
-    SEQUENCE = 'S03'
-    CAMERA = 'c010'
-    DATA_SET_PATH = "aic19/train"
-    DETECTORS = ['mask_rcnn', 'ssd512', 'yolo3']
-    USE_KALMAN = False
-    all_idf1s = []
-    # For all the three detector compute the idf1s
-    for detector in DETECTORS:
-        print("Detector:" + detector)
-        idf1s = do_tracking(detector, DATA_SET_PATH, THRESHOLD, SEQUENCE, CAMERA, SAVE_PATH, USE_KALMAN, GENERATE_VIDEO, SAVE_SUMMARY )
-        all_idf1s.append(idf1s)
-    print(all_idf1s)
 
 def main(argv):
     if len(argv) > 1:
@@ -529,6 +376,7 @@ def main(argv):
         task1()
     elif task == 2:
         task2()
+
 
 if __name__ == "__main__":
     main(sys.argv)

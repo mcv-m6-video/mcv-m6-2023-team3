@@ -3,6 +3,9 @@ import os
 import pickle
 import cv2
 import numpy as np
+import motmetrics as mm
+from tqdm import trange
+import train_features
 
 
 # from https://pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
@@ -366,8 +369,8 @@ def crop_image(track, index_box_track):
 
 
 def format_pkl(all_pkl, camerasL, isGt):
-    # Define the path of the frames for camera S04
-    framesS03 = 'aic19-track1-mtmc-train/train/S03'
+    # Define the path of the frames for camera S01
+    framesS01 = 'aic19-track1-mtmc-train/train/S01'
 
     # Create empty lists to store detections information
     allDetections = []  # List of dictionaries containing camera ID and track IDs with corresponding detections
@@ -398,7 +401,7 @@ def format_pkl(all_pkl, camerasL, isGt):
 
                 # If isGt is False, add the path of the corresponding frame image to the detection information
                 if not isGt:
-                    frame_path = "{}/frames/{}.jpg".format(os.path.join(framesS03, cam), str(frame).zfill(5))
+                    frame_path = "{}/frames/{}.jpg".format(os.path.join(framesS01, cam), str(frame).zfill(5))
                     detections.append({'frame': frame, 'frame_path': frame_path, 'box': boxes})
                 # Otherwise, only add the bounding box coordinates to the detection information
                 else:
@@ -460,3 +463,85 @@ def reformat_predictions(correct_predictions):
 
     # return the reformatted predictions as lists
     return list(cams_list), list(track_id_list), list(frames_list), list(boxes_list)
+
+
+def compute_score(det_info):
+    """
+        Initialize the MOT accumulator with automatic ID assignment
+        det_info(): Detections
+    """
+    acc = mm.MOTAccumulator(auto_id=True)
+
+    # Define the ground truth files for each camera
+    path_gttxts = ['aic19-track1-mtmc-train/train/S01/c001/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S01/c002/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S01/c003/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S01/c004/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S01/c005/gt/gt.txt']
+
+    # Define the track names for each camera
+    track_names = ['c001', 'c002', 'c003', 'c004', 'c005']
+
+    # Loop over each camera
+    for cam_index in range(len(path_gttxts)):
+        # Import the ground truth data for the current camera
+        gt_info = train_features.import_gt_track(path_gttxts[cam_index])
+        formatted_gt = format_pkl_train([gt_info], [track_names[cam_index]])
+        camera_List, trackId_List, frames_List, boxes_List = reformat_predictions(formatted_gt)
+
+        # Correct the ground truth data for the current camera
+        camera_index = np.where(np.array(camera_List) == track_names[cam_index])
+        camera_index = camera_index[0]
+        new_frames = [frames_List[id] for id in camera_index]
+        new_boxes = [boxes_List[id] for id in camera_index]
+        new_tracksId = [trackId_List[id] for id in camera_index]
+
+        # Correct the detection data for the current camera
+        cam_idx_det = np.where(np.array(det_info[0]) == track_names[cam_index])
+        cam_idx_det = cam_idx_det[0]
+        new_frames_det = [det_info[2][id] for id in cam_idx_det]
+        new_boxes_det = [det_info[3][id] for id in cam_idx_det]
+        new_tracksId_det = [det_info[1][id] for id in cam_idx_det]
+
+        # Loop over all frames in the current camera
+        for frameID in trange(len(new_frames), desc="Score"):
+            Nframe = new_frames[frameID]
+
+            # Get the IDs of the tracks from the ground truth at this frame
+            gt_list = [j for j, k in enumerate(new_frames) if k == Nframe]
+            GTlist = [new_tracksId[i] for i in gt_list]
+            GTbbox = [new_boxes[i] for i in gt_list]
+
+            # Get the IDs of the detected tracks at this frame
+            det_list = [j for j, k in enumerate(new_frames_det) if k == Nframe]
+            DETlist = [new_tracksId_det[i] for i in det_list]
+            detectedBoundingBox = [new_boxes_det[i] for i in det_list]
+
+            # Compute the distance between each ground truth track and each detected track
+            distances = []
+            for i in range(len(GTlist)):
+                dist = []
+                # Compute the ground truth bounding box
+                bboxGT = GTbbox[i]
+
+                # Compute centroid GT
+                centerGT = centroid(bboxGT)
+                for j in range(len(DETlist)):
+                    # Compute the predicted bbox
+                    predictedBoundingBox = detectedBoundingBox[j]
+
+                    # Compute centroid PR
+                    centerPR = centroid(predictedBoundingBox)
+
+                    # Compute euclidean distance
+                    d = np.linalg.norm(np.array(centerGT) - np.array(centerPR))
+                    dist.append(d)
+                distances.append(dist)
+
+            # Update the accumulator
+            acc.update(GTlist, DETlist, distances)
+
+    # Compute and show the final metric results
+    mh = mm.metrics.create()
+    summary = mh.compute(acc, metrics=['idf1', 'idp', 'idr', 'precision', 'recall'], name='ACC:')
+    print(summary)
