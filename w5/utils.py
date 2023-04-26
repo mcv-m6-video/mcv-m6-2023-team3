@@ -369,6 +369,19 @@ def crop_image(track, index_box_track):
 
 
 def format_pkl(all_pkl, camerasL, isGt):
+    """
+    Formats detection information in the given .pkl files into a more easily accessible format.
+
+    Args:
+        all_pkl: A list of dictionaries, each containing information about detections for a specific camera.
+        camerasL: A list of camera IDs.
+        isGt: A boolean indicating whether the detections are ground truth or not.
+
+    Returns:
+        A list of dictionaries, each containing information about detections for a specific camera.
+        Each dictionary contains camera ID and track IDs with corresponding detections.
+    """
+    
     # Define the path of the frames for camera S01
     framesS01 = 'aic19-track1-mtmc-train/train/S01'
 

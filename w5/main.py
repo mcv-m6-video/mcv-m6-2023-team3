@@ -14,7 +14,7 @@ import train_features
 from read_dataset import DataAnotations, group_by_frame
 from sort import Sort
 from utils import Track, bb_intersection_over_union, refine_bbox, \
-    Detection, reformat_predictions, crop_image, histogram_hue, format_pkl, compute_score
+    Detection, reformat_predictions, crop_image, histogram_hue, format_pkl, compute_score, get_gt_info
 
 
 def compare_box_detection(last_detection, additional_detections):
@@ -291,7 +291,7 @@ def task2():
 
     """ Train """
     # Get ground truth information and video paths
-    groundTruthData, video_paths = train_features.get_gt_info(gt_train_paths)
+    groundTruthData, video_paths = get_gt_info(gt_train_paths)
 
     # Train the classifier
     nca = train_features.train(groundTruthData, video_paths)
