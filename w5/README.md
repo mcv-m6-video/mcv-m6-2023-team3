@@ -12,7 +12,7 @@ We have proposed the following solution for each task
 
 * **Multi-target multi-camera (MTMC) tracking**
    * Tracking from detections in  Maske R-CNN, SSD512 and Yolo3 backbones.
-   * Train NCA (Neighborhood Component Analysis) model with Hue Histogram features to compute embedding for each track
+   * Train [NCA](http://contrib.scikit-learn.org/metric-learn/generated/metric_learn.NCA.html) model with Hue Histogram features to compute embedding for each track
    * Compare each track of one camera to each one of other cameras and decide a match based on a threshold.
 
 
