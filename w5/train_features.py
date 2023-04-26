@@ -1,3 +1,4 @@
+# Import required packages
 from matplotlib import pyplot as plt
 from metric_learn import NCA
 import random
@@ -7,18 +8,34 @@ from tqdm import trange
 
 # http://contrib.scikit-learn.org/metric-learn/generated/metric_learn.NCA.html
 def train(gtdata, vid_paths, display=False):
-    # set number of images to get from each track
+    """
+    Trains a NCA Model on the provided data and returns the trained model.
+
+    Args:
+        gtdata (numpy array): Ground truth data consisting of frame numbers, bounding boxes, camera numbers,
+                              and track IDs.
+        vid_paths (list): List of file paths for the video sequences used in the ground truth data.
+        display (bool, optional): If True, displays pairs of images with the same IDs across tracks. Defaults to False.
+
+    Returns:
+        Trained NCA model.
+
+    """
+    # Set number of images to get from each track
     num_track = 20
 
+    # Check if there is a pre-existing feature dictionary
     if os.path.isfile('out_features.pkl'):
         infile = open('out_features.pkl', 'rb')
         feat_dict = pickle.load(infile)
         infile.close()
 
+        # If a pre-existing feature dictionary exists, load features and labels from it
         new_features = feat_dict['features']
         new_labels = feat_dict['labels']
 
     else:
+        # If no pre-existing feature dictionary exists, extract features and labels from data
         new_features = []
         new_labels = []
         uniq_tracks = np.unique(gtdata['id'])
@@ -28,6 +45,7 @@ def train(gtdata, vid_paths, display=False):
             # Get all the indices that have the same tracking number
             indices = [i for i, x in enumerate(gtdata['id']) if x == track_id]
 
+            # Extract frames, bboxes, and cameras from the indices
             frames = gtdata['frame']
             frames = [frames[i] for i in indices]
             bboxes = gtdata['box']
@@ -39,22 +57,23 @@ def train(gtdata, vid_paths, display=False):
             for i in range(len(frames)):
                 cam_frames.append([cameras[i]] * len(frames[i]))
 
-            # flatten lists
+            # Flatten lists
             frames = [item for sublist in frames for item in sublist]
             bboxes = [item for sublist in bboxes for item in sublist]
             cam_frames = [item for sublist in cam_frames for item in sublist]
 
+            # If more than num_track frames, select num_track frames randomly
             if len(frames) > num_track:
                 indices = random.sample(range(len(frames)), num_track)
                 frames = [frames[i] for i in indices]
                 bboxes = [bboxes[i] for i in indices]
                 cam_frames = [cam_frames[i] for i in indices]
 
+            # Extract features for each bbox image and append to new_features list
             for i in range(len(frames)):
                 # Get bbox from image
                 vidpath = vid_paths[cam_frames[i]]
                 cap = cv2.VideoCapture(vidpath)
-                total_frames = cap.get(7)
                 cap.set(1, frames[i] - 1)
                 ret, vid_frame = cap.read()
                 bb = bboxes[i]
@@ -66,13 +85,17 @@ def train(gtdata, vid_paths, display=False):
                 new_labels.append(track_id)
                 cap.release()
 
+        # Save new_features and new_labels to out_features.pkl
         filename = 'out_features.pkl'
         outfile = open(filename, 'wb')
         pickle.dump({'features': new_features, 'labels': new_labels}, outfile)
         outfile.close()
 
+    # Convert new_features and new_labels to numpy arrays
     X = np.array(new_features)
     Y = np.array(new_labels)
+
+    # Fit NCA to the data
     nca = NCA(init='pca', n_components=400, max_iter=1500, verbose=True)
     nca.fit(X, Y)
 
@@ -116,10 +139,11 @@ def train(gtdata, vid_paths, display=False):
                 cap1.release()
                 cap2.release()
 
+    # Return
     return nca
 
 
-gt_paths = ["/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/w5/aic19-track1-mtmc-train/train/S01",
+gt_paths = ["/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/w5/aic19-track1-mtmc-train/train/S03",
             "/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/w5/aic19-track1-mtmc-train/train/S04"]
 
 gtdata, vid_paths = get_gt_info(gt_paths)
