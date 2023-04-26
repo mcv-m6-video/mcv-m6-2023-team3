@@ -99,7 +99,7 @@ def histogram_hue(img):
     try:
         # Convert the image to the HSV color space
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    except cv2.error as e:
+    except cv2.error:
         # Return None if there is an error in the conversion
         return None
 
@@ -366,8 +366,8 @@ def crop_image(track, index_box_track):
 
 
 def format_pkl(all_pkl, camerasL, isGt):
-    # Define the path of the frames for camera S01
-    framesS03 = 'aic19-track1-mtmc-train/train/S01'
+    # Define the path of the frames for camera S04
+    framesS03 = 'aic19-track1-mtmc-train/train/S03'
 
     # Create empty lists to store detections information
     allDetections = []  # List of dictionaries containing camera ID and track IDs with corresponding detections

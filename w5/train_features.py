@@ -99,10 +99,6 @@ def train(gtdata, vid_paths, display=False):
     nca = NCA(init='pca', n_components=400, max_iter=1500, verbose=True)
     nca.fit(X, Y)
 
-    filename = 'multires.pkl'
-    outfile = open(filename, 'wb')
-    pickle.dump(nca, outfile)
-    outfile.close()
     if display:
         # Display pairs of images with same IDs across tracks
         unique_ids = np.unique(gtdata['id'])
@@ -143,7 +139,7 @@ def train(gtdata, vid_paths, display=False):
     return nca
 
 
-gt_paths = ["/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/w5/aic19-track1-mtmc-train/train/S03",
+gt_paths = ["/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/w5/aic19-track1-mtmc-train/train/S01",
             "/Users/advaitdixit/Documents/Masters/mcv-m6-2023-team3/w5/aic19-track1-mtmc-train/train/S04"]
 
 gtdata, vid_paths = get_gt_info(gt_paths)

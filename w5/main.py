@@ -11,14 +11,15 @@ def compute_score(det_info):
     acc = mm.MOTAccumulator(auto_id=True)
 
     # Define the ground truth files for each camera
-    path_gttxts = ['aic19-track1-mtmc-train/train/S01/c001/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S01/c002/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S01/c003/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S01/c004/gt/gt.txt',
-                   'aic19-track1-mtmc-train/train/S01/c005/gt/gt.txt']
+    path_gttxts = ['aic19-track1-mtmc-train/train/S03/c010/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S03/c011/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S03/c012/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S03/c013/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S03/c014/gt/gt.txt',
+                   'aic19-track1-mtmc-train/train/S03/c015/gt/gt.txt']
 
     # Define the track names for each camera
-    track_names = ['c001', 'c002', 'c003', 'c004', 'c005']
+    track_names = ['c010', 'c011', 'c012', 'c013', 'c014', 'c015']
 
     # Loop over each camera
     for cam_index in range(len(path_gttxts)):
@@ -82,35 +83,37 @@ def compute_score(det_info):
     # Compute and show the final metric results
     mh = mm.metrics.create()
     summary = mh.compute(acc, metrics=['idf1', 'idp', 'idr', 'precision', 'recall'], name='ACC:')
-
-    return summary
+    print(summary)
 
 
 def task2():
     # Set paths to the training data for ground truth
-    gt_train_paths = ['aic19-track1-mtmc-train/train/S03', 'aic19-track1-mtmc-train/train/S04']
+    gt_train_paths = ['aic19-track1-mtmc-train/train/S01', 'aic19-track1-mtmc-train/train/S04']
 
     # Set the base path for the videos
-    base = 'aic19-track1-mtmc-train/train/S01'
+    base = 'aic19-track1-mtmc-train/train/S03'
+
     # Set the path for each video for each camera
     video_path = {
-        'c001': "{}/c001/vdo.avi".format(base),
-        'c002': "{}/c002/vdo.avi".format(base),
-        'c003': "{}/c003/vdo.avi".format(base),
-        'c004': "{}/c004/vdo.avi".format(base),
-        'c005': "{}/c005/vdo.avi".format(base),
+        'c010': "{}/c010/vdo.avi".format(base),
+        'c011': "{}/c011/vdo.avi".format(base),
+        'c012': "{}/c012/vdo.avi".format(base),
+        'c013': "{}/c013/vdo.avi".format(base),
+        'c014': "{}/c014/vdo.avi".format(base),
+        'c015': "{}/c015/vdo.avi".format(base),
     }
     # Set the frame size for each camera
     frame_size = {
-        'c001': [1920, 1080],
-        'c002': [1920, 1080],
-        'c003': [1920, 1080],
-        'c004': [1920, 1080],
-        'c005': [1280, 960],
+        'c010': [1920, 1080],
+        'c011': [2560, 1920],
+        'c012': [2560, 1920],
+        'c013': [2560, 1920],
+        'c014': [1920, 1080],
+        'c015': [1920, 1080]
     }
 
     # Set the list of camera names
-    camerasList = ['c001', 'c002', 'c003', 'c004', 'c005']
+    camerasList = ['c010', 'c011', 'c012', 'c013', 'c014', 'c015']
 
     # Set the list of pickle names
     pickle_names = ['c10', 'c11', 'c12', 'c13', 'c14', 'c15']
@@ -124,7 +127,7 @@ def task2():
     # Loop through each camera in the list
     for pickle_name in camerasList:
         # Set the path to the detection pickle file for this camera
-        file = "detectionsS01_" + pickle_name + "_ssd512.pkl"
+        file = "detectionsS03_" + pickle_name + "_ssd512.pkl"
         print(file)
         # Open the pickle file and load the detections
         with open(file, 'rb') as f:
@@ -179,8 +182,8 @@ def task2():
                 # Calculate the score between the two cropped images
                 scores = []
                 for n in range(len(cropped_bboxes_cam1)):
-                    ft_vecCam1 = histogram_rgb(cropped_bboxes_cam1[n])
-                    ft_vecCam2 = histogram_rgb(cropped_bboxes_cam2[n])
+                    ft_vecCam1 = histogram_hue(cropped_bboxes_cam1[n])
+                    ft_vecCam2 = histogram_hue(cropped_bboxes_cam2[n])
                     if ft_vecCam2 is None or ft_vecCam1 is None:
                         continue
                     formPairs = [np.vstack((ft_vecCam1, ft_vecCam2))]
@@ -253,8 +256,8 @@ def task2():
 
     # Compute the score for multitracking
     det_info = reformat_predictions(corrected_detections)
-    summary = compute_score(det_info)
-    print(summary)
+    compute_score(det_info)
 
 
 task2()
+
