@@ -11,6 +11,10 @@ We have proposed the following solution for each task
     * Remove static cars based on the distance traveled along the video
 
 * **Multi-target multi-camera (MTMC) tracking**
+   * Tracking from detections in  Maske R-CNN, SSD512 and Yolo3 backbones.
+   * Train NCA (Neighborhood Component Analysis) model with Hue Histogram features to compute embedding for each track
+   * Compare each track of one camera to each one of other cameras and decide a match based on a threshold.
+
 
 
 ## Slides
