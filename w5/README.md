@@ -15,8 +15,8 @@ We have proposed the following solution for each task
 
 ## Slides
 
-The Final Slides are here [here](https://docs.google.com/presentation/d/1COxV1K5cBSR6HK9wBdCDpgl8XroO2eR8A5PmY2dSccE/edit#slide=id.g23aac86a548_0_33)
+The Final Slides are [here](https://docs.google.com/presentation/d/1COxV1K5cBSR6HK9wBdCDpgl8XroO2eR8A5PmY2dSccE/edit#slide=id.g23aac86a548_0_33)
 
 
 ## Report
-The Final report is here [here]
+The Final report is [here]
