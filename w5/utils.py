@@ -121,8 +121,6 @@ def centroid(box):
     """
     Calculates the centroid coordinates of a bounding box.
 
-    arduino
-    Copy code
     Args:
         box (list): A bounding box in the format [x, y, w, h].
 
@@ -343,6 +341,7 @@ def crop_image(track, index_box_track):
     Returns:
     croppedIms (list): List of cropped images.
     """
+    
     # Initialize empty list to store the cropped images.
     croppedIms = []
 
@@ -443,6 +442,7 @@ def reformat_predictions(correct_predictions):
     - frames_list (list): A list of frame numbers.
     - boxes_list (list): A list of detection boxes.
     """
+    
     # initialize lists for storing reformatted predictions
     boxes_list = []
     frames_list = []
