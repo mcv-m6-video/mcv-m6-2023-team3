@@ -19,8 +19,9 @@ We have proposed the following solution for each task
 
 ## Slides
 
-The Final Slides are [here](https://docs.google.com/presentation/d/1COxV1K5cBSR6HK9wBdCDpgl8XroO2eR8A5PmY2dSccE/edit#slide=id.g23aac86a548_0_33)
+The Final slides are [here](https://docs.google.com/presentation/d/1COxV1K5cBSR6HK9wBdCDpgl8XroO2eR8A5PmY2dSccE/edit#slide=id.g23aac86a548_0_33).
 
+You can also visualize the week 5/final presentation in a [static version](https://github.com/mcv-m6-video/mcv-m6-2023-team3/blob/main/Final%20presentation.pdf).
 
 ## Report
 The Final report is [here]
