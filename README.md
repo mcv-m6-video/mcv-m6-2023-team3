@@ -125,6 +125,8 @@ Arguments:
   - [Task 2/3](https://docs.google.com/presentation/d/1i7jyIbeC1bf1TXjsiLCqS8t2q83O2DqegVrfY0NBrIU/edit#slide=id.p)
 
 - [Week 5: Multi-Target Multi-Camera Tracking](https://docs.google.com/presentation/d/1COxV1K5cBSR6HK9wBdCDpgl8XroO2eR8A5PmY2dSccE/edit?usp=sharing)
+
+You can also visualize the week 5/final presentation in a [static PDF](https://github.com/mcv-m6-video/mcv-m6-2023-team3/blob/main/Final%20presentation.pdf)
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
